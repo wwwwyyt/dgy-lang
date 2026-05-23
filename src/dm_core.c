@@ -73,18 +73,7 @@ ErrCode dmDo()
 
 ErrCode dmUnitTest()
 {
-    int i = dsp;
-    push(L'S');
-    dmGetFormat(dstack, i, &dsp);
-    push(L'你');
-    push(L'好');
-    push(L'世');
-    push(L'界');
-    push(L'！');
-    push(L'\n');
-    dmPrintStack(dstack, i, &dsp);
-    dmPrintf(dstack, i, &dsp);
-    dmPrintStack(dstack, i, &dsp);
+    fdmDoLexer("dm/test.dm");
 
     return CODE_SUCCESS;
 }

@@ -3,6 +3,7 @@
 
 #include "dm_all.h"
 #include "dm_object.h"
+#include "dm_parser.h"
 
 ErrCode dmDo();
 ErrCode dmUnitTest();

@@ -24,6 +24,18 @@ void dmDec(cell_t *stack, int bp, int *sp)
     *sp = bp + 1;
 }
 
+void dmMul(cell_t *stack, int bp, int *sp)
+{
+    stack[bp] *= stack[bp + 1];
+    *sp = bp + 1;
+}
+
+void dmDiv(cell_t *stack, int bp, int *sp)
+{
+    stack[bp] /= stack[bp + 1];
+    *sp = bp + 1;
+}
+
 void dmGetFormat(cell_t *stack, int bp, int *sp)
 {
     stack[++bp] = 0;
@@ -35,7 +47,6 @@ void dmPrintf(cell_t *stack, int bp, int *sp)
     wchar_t *fmt[] = {
         L"%llu ",
         L"%lld ",
-        L"%lf ",
         L"%lc",
     };
     int fmtIdx = 0;
@@ -47,11 +58,8 @@ void dmPrintf(cell_t *stack, int bp, int *sp)
     case L'D':
         fmtIdx = 1;
         break;
-    case L'F':
-        fmtIdx = 2;
-        break;
     case L'S':
-        fmtIdx = 3;
+        fmtIdx = 2;
         break;
     }
     for (int i = bp + 2; i < *sp; ++i)

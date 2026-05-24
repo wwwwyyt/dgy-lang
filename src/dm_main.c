@@ -7,12 +7,12 @@
 
 int main(int argc, char *argv[])
 {
-    ErrCode result;
+        ErrCode result;
 
-    result = dmDo();
+        result = dmDo();
 
 #ifdef DM_UNIT_TEST
-    result = dmUnitTest();
+        result = dmUnitTest();
 #endif
-    return result;
+        return result;
 }

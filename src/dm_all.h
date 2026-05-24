@@ -11,12 +11,12 @@
 
 typedef enum
 {
-    CODE_SUCCESS = EXIT_SUCCESS,
-    CODE_FAILURE = EXIT_FAILURE,
-    CODE_OVERFLOW,
-    CODE_UNDERFLOW,
-    CODE_ALLOC_FAIL,
-    CODE_FILE_OPEN_FAIL,
+        CODE_SUCCESS = EXIT_SUCCESS,
+        CODE_FAILURE = EXIT_FAILURE,
+        CODE_OVERFLOW,
+        CODE_UNDERFLOW,
+        CODE_ALLOC_FAIL,
+        CODE_FILE_OPEN_FAIL,
 } ErrCode;
 
 typedef unsigned long long cell_t;

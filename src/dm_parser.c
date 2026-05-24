@@ -3,13 +3,14 @@
 static void sym_escape_seq(FILE *fp, wint_t *wc, int *len);
 static void sym_slash(FILE *fp, wint_t *wc);
 static void sym_hash(FILE *fp, wint_t *wc);
+static unsigned int isReserveCharAt(wint_t wc, int class, int idx, int *status);
 
 static void sym_Immd(FILE *fp, wint_t *wc);
 static void sym_Str(FILE *fp, wint_t *wc);
 static void sym_Obj(FILE *fp, wint_t *wc);
 static void sym_Val(FILE *fp, wint_t *wc);
 static void sym_Cell(FILE *fp, wint_t *wc);
-static void sym_Reserve(FILE *fp, wint_t *wc);
+static void sym_Reserve(FILE *fp, wint_t *wc, int status);
 static void sym_Op(FILE *fp, wint_t *wc);
 static void sym_Comment(FILE *fp, wint_t *wc);
 
@@ -52,7 +53,29 @@ static void sym_slash(FILE *fp, wint_t *wc)
 
 static void sym_hash(FILE *fp, wint_t *wc)
 {
-        
+}
+
+static unsigned int isReserveCharAt(wint_t wc, int class, int idx, int *status)
+{
+        const wchar_t *reserveSym[] = {
+            L"存",
+            L"到",
+            L"令",
+            L"求",
+            L"去",
+            L"就",
+            L"如果",
+            L"否则",
+            L"直到",
+            L"成立",
+            L"句号",
+            L"这里是",
+            L"无条件",
+            L"不成立",
+            L"重复执行",
+            L"检验条件",
+        };
+        unsigned int code; /* 0x[length][class][status] */
 }
 
 static void sym_Immd(FILE *fp, wint_t *wc)
@@ -125,18 +148,13 @@ static void sym_Immd(FILE *fp, wint_t *wc)
                 }
         }
 end:
-        switch (status)
+        if (status == 3)
         {
-        case 3:
                 wprintf(ERR_EXPECT_SYMBLE("xdigits"));
-                break;
-        case 1:
-        case 2:
-        case 4:
-        case 5:
-        case 6:
+        }
+        else
+        {
                 wprintf(L" (%d)\n", len);
-                break;
         }
 }
 
@@ -179,6 +197,19 @@ end:
         case 3:
                 wprintf(ERR_INVALID_SYMBLE("\\n"));
                 break;
+        }
+}
+
+static void sym_Reserve(FILE *fp, wint_t *wc, unsigned int code)
+{
+        int length = code >> 8;
+        int class = (code & 0x010) >> 4;
+        int status = code & 0x001;
+
+        int len = 1;
+        wprintf(L"Reserve=%lc", *wc);
+        while ((*wc = fgetwc(fp)) != WEOF)
+        {
         }
 }
 
@@ -269,6 +300,11 @@ ErrCode fdmDoLexer(const char *fname)
                 }
                 else
                 {
+                        unsigned int code;
+                        if ((code = isReserveStart(wc)) != 0)
+                        {
+                                sym_Reserve(fp, &wc, code);
+                        }
                 }
         }
 

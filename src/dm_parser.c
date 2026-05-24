@@ -3,14 +3,14 @@
 static void sym_escape_seq(FILE *fp, wint_t *wc, int *len);
 static void sym_slash(FILE *fp, wint_t *wc);
 static void sym_hash(FILE *fp, wint_t *wc);
-static unsigned int isReserveCharAt(wint_t wc, int class, int idx, int *status);
-
+static int isReservedCharAt(wint_t wc, int *idx, int *type, int *length);
+        
 static void sym_Immd(FILE *fp, wint_t *wc);
 static void sym_Str(FILE *fp, wint_t *wc);
 static void sym_Obj(FILE *fp, wint_t *wc);
 static void sym_Val(FILE *fp, wint_t *wc);
 static void sym_Cell(FILE *fp, wint_t *wc);
-static void sym_Reserve(FILE *fp, wint_t *wc, int status);
+static void sym_Reserved(FILE *fp, wint_t *wc, int *idx, int type, int length);
 static void sym_Op(FILE *fp, wint_t *wc);
 static void sym_Comment(FILE *fp, wint_t *wc);
 
@@ -55,27 +55,53 @@ static void sym_hash(FILE *fp, wint_t *wc)
 {
 }
 
-static unsigned int isReserveCharAt(wint_t wc, int class, int idx, int *status)
+static int isReservedCharAt(wint_t wc, int *idx, int *type, int *length)
 {
-        const wchar_t *reserveSym[] = {
-            L"存",
-            L"到",
-            L"令",
-            L"求",
-            L"去",
-            L"就",
-            L"如果",
-            L"否则",
-            L"直到",
-            L"成立",
-            L"句号",
-            L"这里是",
-            L"无条件",
-            L"不成立",
-            L"重复执行",
-            L"检验条件",
+        static const int RES_CNT = 16;
+        static const wchar_t *symtable[] = {
+                L"存",
+                L"到",
+                L"令",
+                L"求",
+                L"去",
+                L"就",
+                L"如果",
+                L"否则",
+                L"直到",
+                L"成立",
+                L"句号",
+                L"这里是",
+                L"无条件",
+                L"不成立",
+                L"重复执行",
+                L"检测条件",
         };
-        unsigned int code; /* 0x[length][class][status] */
+
+        int matched = 0;
+        if (*idx == 0)
+        {
+                for (int i = 0; i < RES_CNT; ++i)
+                {
+                        if (wc == symtable[i][*idx])
+                        {
+                                *type = i;
+                                *length = wcslen(symtable[i]);
+                                *idx += 1;
+                                matched = 1;
+                                break;
+                        }
+                }
+        }
+        else if (*idx > 0 && *idx < *length)
+        {
+                if (wc == symtable[*type][*idx])
+                {
+                        *idx += 1;
+                        matched = 1;
+                }
+        }
+        
+        return matched;
 }
 
 static void sym_Immd(FILE *fp, wint_t *wc)
@@ -200,16 +226,25 @@ end:
         }
 }
 
-static void sym_Reserve(FILE *fp, wint_t *wc, unsigned int code)
+static void sym_Reserved(FILE *fp, wint_t *wc, int *idx, int type, int length)
 {
-        int length = code >> 8;
-        int class = (code & 0x010) >> 4;
-        int status = code & 0x001;
-
-        int len = 1;
-        wprintf(L"Reserve=%lc", *wc);
+        wprintf(L"Reserved=%lc", *wc);
         while ((*wc = fgetwc(fp)) != WEOF)
         {
+                if (0 == isReservedCharAt(*wc, idx, &type, &length))
+                {
+                        ungetwc(*wc, fp);
+                        break;
+                }
+                else
+                {
+                        wprintf(L"%lc", *wc);
+                }
+        }        
+        // end
+        if (*idx == length)
+        {
+                wprintf(L" (%d)\n", length);
         }
 }
 
@@ -300,10 +335,10 @@ ErrCode fdmDoLexer(const char *fname)
                 }
                 else
                 {
-                        unsigned int code;
-                        if ((code = isReserveStart(wc)) != 0)
+                        int idx = 0, type, length;
+                        if (isReservedCharAt(wc, &idx, &type, &length))
                         {
-                                sym_Reserve(fp, &wc, code);
+                                sym_Reserved(fp, &wc, &idx, type, length);
                         }
                 }
         }

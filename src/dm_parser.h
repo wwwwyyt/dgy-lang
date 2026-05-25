@@ -3,41 +3,27 @@
 
 #include "dm_all.h"
 
-#define ERR_UNCLOSED_SYMBLE(sym)                        \
+#define ERR_UNCLOSED_SYMBLE(sym) \
         L"\nError: Unclosed symble: '" sym "'\n"
-#define ERR_INVALID_SYMBLE(sym)                 \
+#define ERR_INVALID_SYMBLE(sym) \
         L"\nError: Invalid symble: '" sym "'\n"
-#define ERR_EXPECT_SYMBLE(sym)                  \
+#define ERR_EXPECT_SYMBLE(sym) \
         L"\nError: Expect symble: '" sym "'\n"
 
 typedef enum
 {
-        IMMD_DEC,               /* Decimal immediate number */
-        IMMD_HEX,               /* Hexadecimal immediate number */
-        STR,                    /* String */
-        CHAR,                   /* Character */
+        IMMD_DEC, /* Decimal immediate number */
+        IMMD_HEX, /* Hexadecimal immediate number */
+        STR,      /* String */
+        CHAR,     /* Character */
         COMMENT
 } SymbleType;
 
-static const wchar_t *ReservedSymTable[] = {
-        L"存",
-        L"到",
-        L"令",
-        L"求",
-        L"去",
-        L"就",
-        L"如果",
-        L"否则",
-        L"直到",
-        L"成立",
-        L"句号",
-        L"这里是",
-        L"无条件",
-        L"不成立",
-        L"重复执行",
-        L"检测条件",
-        NULL
-};
+typedef struct
+{
+        wchar_t *symble;
+        int type;
+} SymbleTable;
 
 typedef enum
 {
@@ -47,6 +33,7 @@ typedef enum
         QIU,
         QU,
         JIU,
+        SHE,
         RU_GUO,
         FOU_ZE,
         ZHI_DAO,
@@ -56,24 +43,30 @@ typedef enum
         WU_TIAO_JIAN,
         BU_CHENG_LI,
         CHONG_FU_ZHI_XING,
-        JIAN_CE_TIAO_JIAN
+        JIAN_CE_TIAO_JIAN,
+
+        RESERVED_SYM_CNT,
 } ReservedSymType;
 
-static const wchar_t *OpSymTable[] = {
-        L"<",
-        L">",
-        L"=",
-        L"且",
-        L"或",
-        L"非",
-        L"/",
-        L"#",
-        L"@",
-        L"~",
-        L"<=",
-        L">=",
-        L"/=",
-        NULL,
+static const SymbleTable ReservedSymTable[] = {
+    {L"存", CUN},
+    {L"到", DAO},
+    {L"令", LING},
+    {L"求", QIU},
+    {L"去", QU},
+    {L"就", JIU},
+    {L"设", SHE},
+    {L"如果", RU_GUO},
+    {L"否则", FOU_ZE},
+    {L"直到", ZHI_DAO},
+    {L"成立", CHENG_LI},
+    {L"句号", JU_HAO},
+    {L"这里是", ZHE_LI_SHI},
+    {L"无条件", WU_TIAO_JIAN},
+    {L"不成立", BU_CHENG_LI},
+    {L"重复执行", CHONG_FU_ZHI_XING},
+    {L"检测条件", JIAN_CE_TIAO_JIAN},
+    {NULL, RESERVED_SYM_CNT},
 };
 
 typedef enum
@@ -91,7 +84,26 @@ typedef enum
         BEQ,
         AEQ,
         NEQ,
+
+        OP_SYM_CNT,
 } OpSymType;
+
+static const SymbleTable OpSymTable[] = {
+    {L"<", BELOW},
+    {L">", ABOVE},
+    {L"=", EQ},
+    {L"且", AND},
+    {L"或", OR},
+    {L"非", NOT},
+    {L"/", SLASH},
+    {L"#", HASH},
+    {L"@", AT},
+    {L"~", TILDE},
+    {L"<=", BEQ},
+    {L">=", AEQ},
+    {L"/=", NEQ},
+    {NULL, OP_SYM_CNT},
+};
 
 ErrCode fdmDoLexer(const char *fname);
 

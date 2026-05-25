@@ -1,18 +1,30 @@
 #include "dm_parser.h"
 
+static int isCharAt(wchar_t wc, wchar_t *wcs, int idx);
+
 static void sym_escape_seq(FILE *fp, wint_t *wc, int *len);
 static void sym_slash(FILE *fp, wint_t *wc);
-static void sym_hash(FILE *fp, wint_t *wc);
-static int isReservedCharAt(wint_t wc, int *idx, int *type, int *length);
-        
+static void sym_not_equal(void);
+// static void sym_hash(FILE *fp, wint_t *wc);
+// static int isReservedCharAt(wint_t wc, int *idx, int *type, int *length);
+
 static void sym_Immd(FILE *fp, wint_t *wc);
 static void sym_Str(FILE *fp, wint_t *wc);
-static void sym_Obj(FILE *fp, wint_t *wc);
-static void sym_Val(FILE *fp, wint_t *wc);
-static void sym_Cell(FILE *fp, wint_t *wc);
-static void sym_Reserved(FILE *fp, wint_t *wc, int *idx, int type, int length);
-static void sym_Op(FILE *fp, wint_t *wc, int type, int length);
 static void sym_Comment(FILE *fp, wint_t *wc);
+static int sym_Reserved(FILE *fp, wint_t *wc);
+static int sym_Op(FILE *fp, wint_t *wc);
+
+// static void sym_Obj(FILE *fp, wint_t *wc);
+// static void sym_Val(FILE *fp, wint_t *wc);
+// static void sym_Cell(FILE *fp, wint_t *wc);
+
+static int isCharAt(wchar_t wc, wchar_t *wcs, int idx)
+{
+        if (idx >= wcslen(wcs))
+                return 0;
+        else
+                return wc == wcs[idx];
+}
 
 static void sym_escape_seq(FILE *fp, wint_t *wc, int *len)
 {
@@ -34,11 +46,6 @@ static void sym_escape_seq(FILE *fp, wint_t *wc, int *len)
         }
 }
 
-static void sym_not_equal()
-{
-        wprintf(L"Op='/=' [12](2)\n");
-}
-
 static void sym_slash(FILE *fp, wint_t *wc)
 {
         if ((*wc = fgetwc(fp)) != WEOF)
@@ -57,77 +64,9 @@ static void sym_slash(FILE *fp, wint_t *wc)
         }
 }
 
-static void sym_hash(FILE *fp, wint_t *wc)
+static void sym_not_equal(void)
 {
-}
-
-static int isReservedCharAt(wint_t wc, int *idx, int *type, int *length)
-{
-        const wchar_t **symtable = ReservedSymTable;
-        int matched = 0;
-        if (*idx == 0)
-        {
-                for (int i = 0; symtable[i] != NULL; ++i)
-                {
-                        if (wc == symtable[i][*idx])
-                        {
-                                *type = i;
-                                *length = wcslen(symtable[i]);
-                                *idx += 1;
-                                matched = 1;
-                                break;
-                        }
-                }
-        }
-        else if (*idx > 0 && *idx < *length)
-        {
-                if (wc == symtable[*type][*idx])
-                {
-                        *idx += 1;
-                        matched = 1;
-                }
-        }
-        
-        return matched;
-}
-
-static int isOp(wint_t wc, FILE *fp, int *type, int *length)
-{
-        const wchar_t **symtable = OpSymTable;
-        int matched = 0;
-
-        for (int i = 0; symtable[i] != NULL; ++i)
-        {
-                if (wc == symtable[i][0])
-                {
-                        matched = 1;
-                        *type = i;
-                        break;
-                }
-        }
-
-        wint_t wc2;
-        if (wc == L'<' || wc == L'>' || wc == L'/')
-        {
-                if ((wc2 = fgetwc(fp)) != WEOF)
-                {
-                        if (wc == L'<' && wc2 == L'=')
-                        {
-                                *type = BEQ; /* '<=' */
-                        }
-                        else if (wc == L'>' && wc2 == L'=')
-                        {
-                                *type = AEQ; /* '>=' */
-                        }
-                        else if (wc == L'/' && wc2 == L'=')
-                        {
-                                *type = NEQ; /* '/=' */
-                        }
-                        ungetwc(wc2, fp);
-                }
-        }
-        *length = wcslen(symtable[*type]);
-        return matched;
+        wprintf(L"Op='/=' [%d](%d)\n", NEQ, wcslen(OpSymTable[NEQ].symble));
 }
 
 static void sym_Immd(FILE *fp, wint_t *wc)
@@ -257,40 +196,6 @@ end:
         }
 }
 
-static void sym_Reserved(FILE *fp, wint_t *wc, int *idx, int type, int length)
-{
-        wprintf(L"Reserved=%lc", *wc);
-        while ((*wc = fgetwc(fp)) != WEOF)
-        {
-                if (0 == isReservedCharAt(*wc, idx, &type, &length))
-                {
-                        ungetwc(*wc, fp);
-                        break;
-                }
-                else
-                {
-                        wprintf(L"%lc", *wc);
-                }
-        }
-        if (*idx == length)
-        {
-                wprintf(L" [%d](%d)\n", type, length);
-        }
-}
-
-static void sym_Op(FILE *fp, wint_t *wc, int type, int length)
-{
-        wprintf(L"Op='%lc", *wc);
-        for (int i = 1; i < length; ++i)
-        {
-                if ((*wc = fgetwc(fp)) != WEOF)
-                {
-                        wprintf(L"%lc", *wc);
-                }
-        }
-        wprintf(L"' [%d](%d)\n", type, length);
-}
-
 static void sym_Comment(FILE *fp, wint_t *wc)
 {
         int len = 2;
@@ -344,6 +249,135 @@ static void sym_Comment(FILE *fp, wint_t *wc)
         }
 }
 
+static int sym_Reserved(FILE *fp, wint_t *wc)
+{
+        int idx = 0;
+        ReservedSymType type = RESERVED_SYM_CNT; // Init with an invalid type
+        int matched = 0;
+
+        for (int i = 0; i < RESERVED_SYM_CNT; ++i)
+        {
+                idx = 0;
+                if (isCharAt(*wc, ReservedSymTable[i].symble, idx))
+                {
+                        idx++;
+
+                        int length = wcslen(ReservedSymTable[i].symble);
+                        while (idx < length)
+                        {
+                                if ((*wc = fgetwc(fp)) != WEOF)
+                                {
+                                        if (isCharAt(*wc, ReservedSymTable[i].symble, idx))
+                                        {
+                                                idx++;
+                                        }
+                                        else
+                                        {
+                                                goto while_end; // match failed
+                                        }
+                                }
+                                else
+                                {
+                                        goto while_end; // match failed
+                                }
+                        }
+                while_end:
+                        if (idx == length) // matched
+                        {
+                                if ((*wc = fgetwc(fp)) == WEOF || iswspace(*wc)) // check end
+                                {
+                                        type = i;
+                                        goto end;
+                                }
+                                else // check end failed
+                                {
+                                        ungetwc(*wc, fp);
+                                }
+                        }
+                        else // unmatched (idx < length)
+                        {
+
+                                for (int i = 0; i < idx + 1; ++i)
+                                {
+                                        ungetwc(*wc, fp);
+                                }
+                        }
+                }
+        }
+end:
+        if (type != RESERVED_SYM_CNT)
+        {
+                wprintf(L"Reserved=%ls [%d](%d)\n", ReservedSymTable[type].symble, type, wcslen(ReservedSymTable[type].symble));
+                matched = 1;
+        }
+        return matched;
+}
+
+static int sym_Op(FILE *fp, wint_t *wc)
+{
+        int idx = 0;
+        OpSymType type = OP_SYM_CNT; // Init with an invalid type
+        int matched = 0;
+
+        for (int i = 0; i < OP_SYM_CNT; ++i)
+        {
+                idx = 0;
+                if (isCharAt(*wc, OpSymTable[i].symble, idx))
+                {
+                        idx++;
+
+                        int length = wcslen(OpSymTable[i].symble);
+                        while (idx < length)
+                        {
+                                if ((*wc = fgetwc(fp)) != WEOF)
+                                {
+                                        if (isCharAt(*wc, OpSymTable[i].symble, idx))
+                                        {
+                                                idx++;
+                                        }
+                                        else
+                                        {
+                                                goto while_end; // match failed
+                                        }
+                                }
+                                else
+                                {
+                                        goto while_end; // match failed
+                                }
+                        }
+                while_end:
+                        if (idx == length) // matched
+                        {
+                                if ((*wc = fgetwc(fp)) == WEOF || iswspace(*wc)) // check end
+                                {
+                                        type = i;
+                                        goto end;
+                                }
+                                else // check end failed
+                                {
+                                        ungetwc(*wc, fp);
+                                        continue;
+                                }
+                        }
+                        else // unmatched (idx < length)
+                        {
+
+                                for (int i = 0; i < idx + 1; ++i)
+                                {
+                                        ungetwc(*wc, fp);
+                                }
+                        }
+                }
+        }
+end:
+        if (type != OP_SYM_CNT)
+        {
+                wprintf(L"Op='%ls' [%d](%d)\n", OpSymTable[type].symble, type, wcslen(OpSymTable[type].symble));
+                matched = 1;
+        }
+        return matched;
+}
+
 ErrCode fdmDoLexer(const char *fname)
 {
         ErrCode code = CODE_FAILURE;
@@ -373,21 +407,13 @@ ErrCode fdmDoLexer(const char *fname)
                 {
                         sym_Immd(fp, &wc);
                 }
-                else if (wc == L'#')
+                else if (sym_Reserved(fp, &wc))
                 {
-                        sym_hash(fp, &wc);
+                        continue;
                 }
-                else
+                else if (sym_Op(fp, &wc))
                 {
-                        int idx = 0, type, length;
-                        if (isReservedCharAt(wc, &idx, &type, &length))
-                        {
-                                sym_Reserved(fp, &wc, &idx, type, length);
-                        }
-                        else if (isOp(wc, fp, &type, &length))
-                        {
-                                sym_Op(fp, &wc, type, length);
-                        }
+                        continue;
                 }
         }
 

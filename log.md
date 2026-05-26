@@ -376,3 +376,49 @@ Forth 是一个拥有 两个栈1 和 一片可动态分配的内存区域 的虚
 1, 字母、汉字、数字、下划线 -> 1
 1, 其他 -> 2(END)
 ```
+
+2
+
+在进行了一些错误排查后，总算是实现了对字符串、注释、立即数、保留字、操作符和名称的词法分析。
+
+其基本的处理框架是这样的：
+
+```c
+while ((wc = fgetwc(fp)) != WEOF)
+{
+        if (iswspace(wc))
+        {
+                continue;
+        }
+        else if (sym_Str(fp, wc))
+        {
+                continue;
+        }
+        else if (sym_Comment(fp, wc))
+        {
+                continue;
+        }
+        else if (sym_Immd(fp, wc);)
+        {
+                continue;
+        }
+        else if (sym_Reserved(fp, wc))
+        {
+                continue;
+        }
+        else if (sym_Op(fp, wc))
+        {
+                continue;
+        }
+        else if (sym_Name(fp, wc))
+        {
+                continue;
+        }
+        else
+        {
+                wprintf(L"Error: Unrecognized character: '%lc'\n", wc);
+        }
+}
+```
+
+条件判断的每个分支都会对当前读取的字符进行匹配，匹配成功则读取之后的字符。在匹配失败时，会归还向前多读取的字符，然后进行下一种类型的匹配。

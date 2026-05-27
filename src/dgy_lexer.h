@@ -1,5 +1,5 @@
-#ifndef _dgy_parser_h
-#define _dgy_parser_h
+#ifndef _dgy_lexer_h
+#define _dgy_lexer_h
 
 #include "dgy_all.h"
 
@@ -112,4 +112,4 @@ static const SymbleTable OpSymTable[] = {
 
 ErrCode fdgyDoLexer(const char *fname);
 
-#endif /* _dgy_parser_h */
+#endif /* _dgy_lexer_h */

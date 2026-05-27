@@ -3,7 +3,7 @@
 
 #include "dgy_all.h"
 #include "dgy_object.h"
-#include "dgy_parser.h"
+#include "dgy_lexer.h"
 
 ErrCode dgyDo();
 ErrCode dgyUnitTest();

@@ -1,4 +1,4 @@
-#include "dgy_parser.h"
+#include "dgy_lexer.h"
 
 static int isCharAt(wchar_t wc, wchar_t *wcs, int idx);
 static int isValidNameChar(wchar_t wc);
@@ -11,8 +11,6 @@ static int sym_Comment(FILE *fp, wint_t wc);
 static int sym_Reserved(FILE *fp, wint_t wc);
 static int sym_Op(FILE *fp, wint_t wc);
 static int sym_Name(FILE *fp, wint_t wc);
-// static void sym_Val(FILE *fp, wint_t *wc);
-// static void sym_Cell(FILE *fp, wint_t *wc);
 
 static int isCharAt(wchar_t wc, wchar_t *wcs, int idx)
 {

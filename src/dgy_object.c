@@ -1,48 +1,48 @@
-#include "dm_object.h"
+#include "dgy_object.h"
 
-void dmAdd(cell_t *stack, int bp, int *sp)
+void dgyAdd(cell_t *stack, int bp, int *sp)
 {
         stack[bp] += stack[bp + 1];
         *sp = bp + 1;
 }
 
-void dmInc(cell_t *stack, int bp, int *sp)
+void dgyInc(cell_t *stack, int bp, int *sp)
 {
         stack[bp] += 1;
         *sp = bp + 1;
 }
 
-void dmSub(cell_t *stack, int bp, int *sp)
+void dgySub(cell_t *stack, int bp, int *sp)
 {
         stack[bp] -= stack[bp + 1];
         *sp = bp + 1;
 }
 
-void dmDec(cell_t *stack, int bp, int *sp)
+void dgyDec(cell_t *stack, int bp, int *sp)
 {
         stack[bp] -= 1;
         *sp = bp + 1;
 }
 
-void dmMul(cell_t *stack, int bp, int *sp)
+void dgyMul(cell_t *stack, int bp, int *sp)
 {
         stack[bp] *= stack[bp + 1];
         *sp = bp + 1;
 }
 
-void dmDiv(cell_t *stack, int bp, int *sp)
+void dgyDiv(cell_t *stack, int bp, int *sp)
 {
         stack[bp] /= stack[bp + 1];
         *sp = bp + 1;
 }
 
-void dmGetFormat(cell_t *stack, int bp, int *sp)
+void dgyGetFormat(cell_t *stack, int bp, int *sp)
 {
         stack[++bp] = 0;
         *sp = bp + 1;
 }
 
-void dmPrintf(cell_t *stack, int bp, int *sp)
+void dgyPrintf(cell_t *stack, int bp, int *sp)
 {
         wchar_t *fmt[] = {
             L"%llu ",
@@ -69,7 +69,7 @@ void dmPrintf(cell_t *stack, int bp, int *sp)
         *sp = bp;
 }
 
-void dmPrintStack(cell_t *stack, int bp, int *sp)
+void dgyPrintStack(cell_t *stack, int bp, int *sp)
 {
         wprintf(L"(%d, %d) ", bp, *sp);
         for (int i = bp; i < *sp; ++i)

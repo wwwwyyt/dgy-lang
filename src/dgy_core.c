@@ -1,4 +1,4 @@
-#include "dm_core.h"
+#include "dgy_core.h"
 
 static cell_t *dstack = NULL;
 static int dsp = 0;
@@ -53,27 +53,27 @@ static cell_t top()
         return dstack[dsp - 1];
 }
 
-static void dmMov(cell_t *src, cell_t *dst)
+static void dgyMov(cell_t *src, cell_t *dst)
 {
         *dst = *src;
 }
 
-static void dmLet(int bp,
-                  int sp,
-                  void (*dmObject)(cell_t *dstack, unsigned int dbp))
+static void dgyLet(int bp,
+                   int sp,
+                   void (*dgyObject)(cell_t *dstack, unsigned int dbp))
 {
 }
 
-ErrCode dmDo()
+ErrCode dgyDo()
 {
         setlocale(LC_ALL, "zh_CN.utf8");
         init();
         return CODE_SUCCESS;
 }
 
-ErrCode dmUnitTest()
+ErrCode dgyUnitTest()
 {
-        fdmDoLexer("dm/test.dm");
+        fdgyDoLexer("dgy/test.dgy");
 
         return CODE_SUCCESS;
 }

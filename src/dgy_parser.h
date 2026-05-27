@@ -1,7 +1,7 @@
-#ifndef _dm_parser_h
-#define _dm_parser_h
+#ifndef _dgy_parser_h
+#define _dgy_parser_h
 
-#include "dm_all.h"
+#include "dgy_all.h"
 
 #define ERR_UNCLOSED_SYMBLE(sym) \
         L"\nError: Unclosed symble: '" sym "'\n"
@@ -110,6 +110,6 @@ static const SymbleTable OpSymTable[] = {
     {NULL, OP_SYM_CNT},
 };
 
-ErrCode fdmDoLexer(const char *fname);
+ErrCode fdgyDoLexer(const char *fname);
 
-#endif /* _dm_parser_h */
+#endif /* _dgy_parser_h */

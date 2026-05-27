@@ -1,4 +1,4 @@
-#include "dm_parser.h"
+#include "dgy_parser.h"
 
 static int isCharAt(wchar_t wc, wchar_t *wcs, int idx);
 static int isValidNameChar(wchar_t wc);
@@ -296,17 +296,17 @@ end:
 
 static int sym_Reserved(FILE *fp, wint_t wc)
 {
-        static size_t reservedMaxLength = 0;
-        if (reservedMaxLength == 0)
+        static size_t reservedgyaxLength = 0;
+        if (reservedgyaxLength == 0)
         {
                 for (int i = 0; i < OP_SYM_CNT; ++i)
                 {
                         size_t len = wcslen(ReservedSymTable[i].symble);
-                        if (len > reservedMaxLength)
-                                reservedMaxLength = len;
+                        if (len > reservedgyaxLength)
+                                reservedgyaxLength = len;
                 }
         }
-        wchar_t *buffer = malloc(reservedMaxLength * sizeof(wchar_t));
+        wchar_t *buffer = malloc(reservedgyaxLength * sizeof(wchar_t));
         int bufIdx = 0;
 
         int idx = 0;
@@ -495,7 +495,7 @@ end:
         return matched;
 }
 
-ErrCode fdmDoLexer(const char *fname)
+ErrCode fdgyDoLexer(const char *fname)
 {
         ErrCode code = CODE_FAILURE;
         FILE *fp = fopen(fname, "r");

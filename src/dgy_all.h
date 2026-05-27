@@ -1,5 +1,5 @@
-#ifndef _dm_all_h
-#define _dm_all_h
+#ifndef _dgy_all_h
+#define _dgy_all_h
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,4 +21,4 @@ typedef enum
 
 typedef unsigned long long cell_t;
 
-#endif /* _dm_all_h */
+#endif /* _dgy_all_h */

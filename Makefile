@@ -1,5 +1,5 @@
 SRC = src/*.c
-TAR = datamate
+TAR = DGY
 CC = gcc
 CFLAGS = -g -Wall
 

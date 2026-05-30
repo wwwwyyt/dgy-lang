@@ -3,14 +3,14 @@
 static int isCharAt(wchar_t wc, wchar_t *wcs, int idx);
 static int isValidNameChar(wchar_t wc);
 
-static void sym_escape_seq(FILE *fp, int *len);
+static void sym_escape_seq(FILE *in, int *len, wchar_t *buffer);
 
-static int sym_Immd(FILE *fp, wint_t wc);
-static int sym_Str(FILE *fp, wint_t wc);
-static int sym_Comment(FILE *fp, wint_t wc);
-static int sym_Reserved(FILE *fp, wint_t wc);
-static int sym_Op(FILE *fp, wint_t wc);
-static int sym_Name(FILE *fp, wint_t wc);
+static int sym_Immd(FILE *in, wint_t wc, FILE *out);
+static int sym_Str(FILE *in, wint_t wc, FILE *out);
+static int sym_Comment(FILE *in, wint_t wc, FILE *out);
+static int sym_Reserved(FILE *in, wint_t wc, FILE *out);
+static int sym_Op(FILE *in, wint_t wc, FILE *out);
+static int sym_Name(FILE *in, wint_t wc, FILE *out);
 
 static int isCharAt(wchar_t wc, wchar_t *wcs, int idx)
 {
@@ -33,207 +33,300 @@ static int isValidNameChar(wchar_t wc)
                 return 0;
 }
 
-static void sym_escape_seq(FILE *fp, int *len)
+static void sym_escape_seq(FILE *in, int *len, wchar_t *buffer)
 {
         wint_t wc;
-        if ((wc = fgetwc(fp)) != WEOF)
+        if ((wc = fgetwc(in)) != WEOF)
         {
                 switch (wc)
                 {
                 case L'n':
-                        (*len)++;
-                        wprintf(L"\n");
+                        buffer[(*len)++] = L'\n';
                         break;
                 case L'\\':
                 case L'*':
                 default:
-                        (*len)++;
-                        wprintf(L"%lc", wc);
+                        buffer[(*len)++] = wc;
                         break;
                 }
         }
 }
 
-static int sym_Immd(FILE *fp, wint_t wc)
+static int sym_Immd(FILE *in, wint_t wc, FILE *out)
 {
-        int matched = 0;
-        int len = 0;
-        int status = 0;
-        SymbleType type = IMMD_DEC;
-        if (iswdigit(wc))
+        enum
         {
-                len++;
-                status = 1;
-                wprintf(L"Immd=%lc", wc);
+                START,
+                POS_1,
+                POS_END,
+                NEG_1,
+                NEG_2,
+                NEG_END,
+                HEX_1,
+                HEX_2,
+                HEX_3,
+                HEX_END,
+        };
+        enum
+        {
+                MAX_BUF_SIZE = 20,
+        };
+        int matched = 0;
+        wchar_t buffer[MAX_BUF_SIZE]; // 20 is the length of maximum number -2^63
+        int bufIdx = 0;
+        int outOfBuf = 0;
+        int status = START;
+        if (wc != L'0' && iswdigit(wc))
+        {
+                status = POS_1; // positive integer
+                buffer[bufIdx++] = wc;
+        }
+        else if (wc == L'-')
+        {
+                status = NEG_1; // negative integer
+                buffer[bufIdx++] = wc;
+        }
+        else if (wc == L'0')
+        {
+                status = HEX_1; // hexadecimal integer
+                buffer[bufIdx++] = wc;
         }
         else
         {
                 goto end;
         }
-        if (wc == L'0')
+        while ((wc = fgetwc(in)) != WEOF)
         {
-                type = IMMD_HEX;
-                status = 2;
-        }
-        while ((wc = fgetwc(fp)) != WEOF)
-        {
-                if (status == 1)
+                switch (status)
                 {
+                case POS_1:
                         if (iswdigit(wc) || wc == L'_')
                         {
-                                len++;
-                                wprintf(L"%lc", wc);
+                                if (bufIdx < MAX_BUF_SIZE && wc != L'_')
+                                {
+                                        buffer[bufIdx++] = wc;
+                                }
+                                else
+                                {
+                                        outOfBuf++;
+                                }
                         }
                         else
                         {
-                                status = 4;
-                                ungetwc(wc, fp);
+                                status = POS_END;
+                                ungetwc(wc, in);
                                 goto end;
                         }
-                }
-                else if (status == 2)
-                {
+                        break;
+                case NEG_1:
+                        if (wc != L'0' && iswdigit(wc))
+                        {
+                                status = NEG_2;
+                                buffer[bufIdx++] = wc;
+                        }
+                        else
+                        {
+                                ungetwc(wc, in);
+                                goto end; // expect digits
+                        }
+                        break;
+                case NEG_2:
+                        if (iswdigit(wc) || wc == L'_')
+                        {
+                                if (bufIdx < MAX_BUF_SIZE && wc != L'_')
+                                {
+                                        buffer[bufIdx++] = wc;
+                                }
+                                else
+                                {
+                                        outOfBuf++;
+                                }
+                        }
+                        else
+                        {
+                                status = NEG_END;
+                                ungetwc(wc, in);
+                                goto end;
+                        }
+                        break;
+                case HEX_1:
                         if (wc == L'x' || wc == L'X')
                         {
-                                len++;
-                                status = 3;
-                                wprintf(L"%lc", wc);
+                                status = HEX_2;
+                                buffer[bufIdx++] = wc;
                         }
                         else
                         {
-                                status = 4;
-                                ungetwc(wc, fp);
+                                status = POS_END;
+                                ungetwc(wc, in);
                                 goto end;
                         }
-                }
-                else if (status == 3)
-                {
+                        break;
+                case HEX_2:
                         if (iswxdigit(wc))
                         {
-                                len++;
-                                status = 5;
-                                wprintf(L"%lc", wc);
+                                status = HEX_3;
+                                buffer[bufIdx++] = wc;
                         }
                         else
                         {
-                                ungetwc(wc, fp);
-                                goto end; // error: '0x' is not a complete number
+                                ungetwc(wc, in);
+                                goto end; // expect xdigit
                         }
-                }
-                else if (status == 5)
-                {
+                        break;
+                case HEX_3:
                         if (iswxdigit(wc) || wc == L'_')
                         {
-                                len++;
-                                wprintf(L"%lc", wc);
+                                if (bufIdx < MAX_BUF_SIZE && wc != L'_')
+                                {
+                                        buffer[bufIdx++] = wc;
+                                }
+                                else
+                                {
+                                        outOfBuf++;
+                                }
                         }
                         else
                         {
-                                status = 6;
-                                ungetwc(wc, fp);
+                                status = HEX_END;
+                                ungetwc(wc, in);
                                 goto end;
                         }
+                        break;
                 }
         }
+
 end:
-        if (status == 3)
+        switch (status)
         {
+        case NEG_1:
+                wprintf(ERR_EXPECT_SYMBLE("digits"));
+                break;
+        case HEX_2:
                 wprintf(ERR_EXPECT_SYMBLE("xdigits"));
-        }
-        else if (status == 4 || status == 6)
-        {
+                break;
+        case POS_END:
+        case NEG_END:
+        case HEX_END:
                 matched = 1;
-                wprintf(L" [%d](%d)\n", type, len);
+                buffer[bufIdx] = L'\0';
+                fputws(buffer, out);
+                fputwc(S_IMMD, out);
+                if (outOfBuf > 0)
+                {
+                        wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
+                }
+                break;
         }
         return matched;
 }
 
-static int sym_Str(FILE *fp, wint_t wc)
+static int sym_Str(FILE *in, wint_t wc, FILE *out)
 {
+        enum
+        {
+                START,
+                STR_1,
+                STR_2,
+                STR_END,
+        };
+        enum
+        {
+                MAX_BUF_SIZE = 1024,
+        };
         int matched = 0;
-        int len = 0;
-        int status = 0;
-        SymbleType type = STR;
+        wchar_t buffer[MAX_BUF_SIZE];
+        int bufIdx = 0;
+        int status = START;
+        int outOfBuf = 0;
         if (wc == L'*')
         {
-                status = 1;
-                len++;
-                wprintf(L"Str=%lc", wc);
+                status = STR_1;
         }
         else
         {
                 goto end;
         }
-        while ((wc = fgetwc(fp)) != WEOF)
+        while ((wc = fgetwc(in)) != WEOF)
         {
                 if (wc == L'\n')
                 {
-                        status = 3;
+                        status = STR_2;
                         goto end;
                 }
                 switch (wc)
                 {
                 case L'*':
-                        len++;
-                        status = 2;
+                        status = STR_END;
                         goto end;
                 case L'\\':
-                        sym_escape_seq(fp, &len);
+                        sym_escape_seq(in, &bufIdx, buffer);
                         break;
                 default:
-                        len++;
-                        wprintf(L"%lc", wc);
+                        if (bufIdx < MAX_BUF_SIZE)
+                        {
+                                buffer[bufIdx++] = wc;
+                        }
+                        else
+                        {
+                                outOfBuf++;
+                        }
                         break;
                 }
         }
 end:
         switch (status)
         {
-        case 1:
+        case STR_1:
                 wprintf(ERR_UNCLOSED_SYMBLE("*"));
                 break;
-        case 2:
-                if (len == 1)
-                        type = CHAR;
-                wprintf(L"%lc [%d](%d)\n", wc, type, len);
-                matched = 1;
-                break;
-        case 3:
+        case STR_2:
                 wprintf(ERR_INVALID_SYMBLE("\\n"));
                 break;
-        default:
+        case STR_END:
+                matched = 1;
+                buffer[bufIdx] = L'\0';
+                fputws(buffer, out);
+                fputwc(S_STR, out);
+                if (outOfBuf > 0)
+                {
+                        wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
+                }
                 break;
         }
         return matched;
 }
 
-static int sym_Comment(FILE *fp, wint_t wc)
+static int sym_Comment(FILE *in, wint_t wc, FILE *out)
 {
+        enum
+        {
+                START,
+                CMT_1,
+                CMT_2,
+                CMT_3,
+                CMT_END
+        };
         int matched = 0;
-        int len = 0;
-        int status = 0;
-        SymbleType type = COMMENT;
+        int status = START;
         if (wc == L'/')
         {
-                status = 1;
-                len++;
-                if ((wc = fgetwc(fp)) != WEOF)
+                status = CMT_1;
+                if ((wc = fgetwc(in)) != WEOF)
                 {
                         if (wc == L'*')
                         {
-                                status = 2;
-                                len++;
-                                wprintf(L"Comment=/*");
+                                status = CMT_2;
                         }
                         else
                         {
-                                ungetwc(wc, fp);
+                                ungetwc(wc, in);
                                 goto end;
                         }
                 }
                 else
                 {
-                        ungetwc(wc, fp);
+                        ungetwc(wc, in);
                         goto end;
                 }
         }
@@ -241,50 +334,39 @@ static int sym_Comment(FILE *fp, wint_t wc)
         {
                 goto end;
         }
-        while ((wc = fgetwc(fp)) != WEOF)
+        while ((wc = fgetwc(in)) != WEOF)
         {
-                if (status == 2)
+                if (status == CMT_2)
                 {
                         if (wc == L'*')
                         {
-                                len++;
-                                status = 3;
+                                status = CMT_3;
                         }
-                        else
-                        {
-                                len++;
-                        }
-                        wprintf(L"%lc", wc);
-                        continue;
                 }
-                if (status == 3)
+                else if (status == CMT_3)
                 {
                         if (wc == L'/')
                         {
-                                len++;
-                                status = 4;
-                                break;
+                                status = CMT_END;
+                                goto end;
                         }
                         else
                         {
-                                len++;
-                                status = 2;
+                                status = CMT_2;
                         }
-                        wprintf(L"%lc", wc);
                 }
         }
 end:
         switch (status)
         {
-        case 2:
+        case CMT_2:
                 wprintf(ERR_UNCLOSED_SYMBLE("/*"));
                 break;
-        case 3:
+        case CMT_3:
                 wprintf(ERR_UNCLOSED_SYMBLE("/"));
                 break;
-        case 4:
+        case CMT_END:
                 matched = 1;
-                wprintf(L"%lc [%d](%d)\n", wc, type, len);
                 break;
         default:
                 break;
@@ -292,7 +374,7 @@ end:
         return matched;
 }
 
-static int sym_Reserved(FILE *fp, wint_t wc)
+static int sym_Reserved(FILE *in, wint_t wc, FILE *out)
 {
         static size_t reservedgyaxLength = 0;
         if (reservedgyaxLength == 0)
@@ -320,7 +402,7 @@ static int sym_Reserved(FILE *fp, wint_t wc)
                         while (idx < length)
                         {
                                 buffer[bufIdx++] = wc;
-                                if ((wc = fgetwc(fp)) != WEOF)
+                                if ((wc = fgetwc(in)) != WEOF)
                                 {
                                         if (isCharAt(wc, ReservedSymTable[i].symble, idx))
                                         {
@@ -340,7 +422,7 @@ static int sym_Reserved(FILE *fp, wint_t wc)
                         if (idx == length) // matched
                         {
                                 buffer[bufIdx++] = wc;
-                                if ((wc = fgetwc(fp)) == WEOF || iswspace(wc)) // check end
+                                if ((wc = fgetwc(in)) == WEOF || iswspace(wc)) // check end
                                 {
                                         type = i;
                                         goto end;
@@ -349,7 +431,7 @@ static int sym_Reserved(FILE *fp, wint_t wc)
                                 {
                                         while (bufIdx > 0)
                                         {
-                                                ungetwc(wc, fp);
+                                                ungetwc(wc, in);
                                                 wc = buffer[--bufIdx];
                                         }
                                         continue;
@@ -359,7 +441,7 @@ static int sym_Reserved(FILE *fp, wint_t wc)
                         {
                                 while (bufIdx > 0)
                                 {
-                                        ungetwc(wc, fp);
+                                        ungetwc(wc, in);
                                         wc = buffer[--bufIdx];
                                 }
                                 continue;
@@ -370,13 +452,14 @@ end:
         free(buffer);
         if (type != RESERVED_SYM_CNT)
         {
-                wprintf(L"Reserved='%ls' [%d](%d)\n", ReservedSymTable[type].symble, type, wcslen(ReservedSymTable[type].symble));
                 matched = 1;
+                fputwc(type, out);
+                fputwc(S_RESERVED, out);
         }
         return matched;
 }
 
-static int sym_Op(FILE *fp, wint_t wc)
+static int sym_Op(FILE *in, wint_t wc, FILE *out)
 {
         static size_t opMaxLength = 0;
         if (opMaxLength == 0)
@@ -404,7 +487,7 @@ static int sym_Op(FILE *fp, wint_t wc)
                         while (idx < length)
                         {
                                 buffer[bufIdx++] = wc;
-                                if ((wc = fgetwc(fp)) != WEOF)
+                                if ((wc = fgetwc(in)) != WEOF)
                                 {
                                         if (isCharAt(wc, OpSymTable[i].symble, idx))
                                         {
@@ -430,7 +513,7 @@ static int sym_Op(FILE *fp, wint_t wc)
                         {
                                 while (bufIdx > 0)
                                 {
-                                        ungetwc(wc, fp);
+                                        ungetwc(wc, in);
                                         wc = buffer[--bufIdx];
                                 }
                                 continue;
@@ -441,115 +524,174 @@ end:
         free(buffer);
         if (type != OP_SYM_CNT)
         {
-                wprintf(L"Op='%ls' [%d](%d)\n", OpSymTable[type].symble, type, wcslen(OpSymTable[type].symble));
                 matched = 1;
+                fputwc(type, out);
+                fputwc(S_OP, out);
         }
         return matched;
 }
 
-static int sym_Name(FILE *fp, wint_t wc)
+static int sym_Name(FILE *in, wint_t wc, FILE *out)
 {
-        int status = 0;
-        int len = 0;
+        enum
+        {
+                START,
+                NAME_1,
+                NAME_END,
+        };
+        enum
+        {
+                MAX_BUF_SIZE = 1024,
+        };
+        int status = START;
+        wchar_t buffer[MAX_BUF_SIZE];
+        int bufIdx = 0;
         int matched = 0;
-
+        int outOfBuf = 0;
         if (!iswdigit(wc) && isValidNameChar(wc))
         {
-                len++;
-                wprintf(L"Name='%lc", wc);
-                status = 1;
+
+                buffer[bufIdx++] = wc;
+                status = NAME_1;
         }
         else
         {
                 goto end;
         }
-        while ((wc = fgetwc(fp)) != EOF)
+        while ((wc = fgetwc(in)) != EOF)
         {
-                if (status == 1)
+                if (status == NAME_1)
                 {
                         if (isValidNameChar(wc))
                         {
-                                len++;
-                                wprintf(L"%lc", wc);
+                                if (bufIdx < MAX_BUF_SIZE)
+                                {
+                                        buffer[bufIdx++] = wc;
+                                }
+                                else
+                                {
+                                        outOfBuf++;
+                                }
                         }
                         else
                         {
-                                ungetwc(wc, fp);
-                                status = 2;
+                                ungetwc(wc, in);
+                                status = NAME_END;
                                 goto end;
                         }
                 }
         }
         if (wc == EOF)
         {
-                status = 2;
+                status = NAME_END;
         }
 end:
-        if (status == 2)
+        if (status == NAME_END)
         {
                 matched = 1;
-                wprintf(L"' (%d)\n", len);
+                buffer[bufIdx] = L'\0';
+                fputws(buffer, out);
+                fputwc(S_NAME, out);
+                if (outOfBuf > 0)
+                {
+                        wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
+                }
         }
         return matched;
 }
 
-ErrCode fdgyDoLexer(const char *fname)
+ErrCode dgyDoLexer(FILE *in, FILE *out, const int maxMatchedCnt)
+{
+        ErrCode code = CODE_FAILURE;
+        if (!in)
+        {
+                perror("dgyDoLexer");
+                return CODE_NULLPTR;
+        }
+        int matchedCnt = 0;
+        if (maxMatchedCnt == -1) /* If maxMatchedCnt == -1, set matchedCnt to a number smaller than -1. */
+        {
+                matchedCnt = -2;
+        }
+        for (wint_t wc; ((wc = fgetwc(in)) != WEOF) && (matchedCnt < maxMatchedCnt);)
+        {
+                int matched = 0;
+                if (iswspace(wc))
+                {
+                        continue;
+                }
+                else if (sym_Str(in, wc, out))
+                {
+                        matched = 1;
+                }
+                else if (sym_Comment(in, wc, out))
+                {
+                        matched = 1;
+                }
+                else if (sym_Immd(in, wc, out))
+                {
+                        matched = 1;
+                }
+                else if (sym_Reserved(in, wc, out))
+                {
+                        matched = 1;
+                }
+                else if (sym_Op(in, wc, out))
+                {
+                        matched = 1;
+                }
+                else if (sym_Name(in, wc, out))
+                {
+                        matched = 1;
+                }
+                else
+                {
+                        wprintf(L"\nError: Unrecognized character: '%lc'\n", wc);
+                }
+                // check matched
+                if (matched && maxMatchedCnt != -1) /* If maxMatchedCnt == -1, never increment matchedCnt. */
+                {
+                        matchedCnt++;
+                }
+        }
+
+        if (ferror(in))
+        {
+                if (errno == EILSEQ)
+                        wprintf(L"\nCharacter encoding error while reading.\n");
+                else
+                        wprintf(L"\nI/O error when reading\n");
+        }
+        else if (feof(in))
+        {
+                wprintf(L"\nEnd of stream is reached successfully\n");
+                code = CODE_SUCCESS;
+        }
+        return code;
+}
+
+ErrCode fdgyDoLexer(const char *fname, FILE *out)
 {
         ErrCode code = CODE_FAILURE;
         FILE *fp = fopen(fname, "r");
         if (!fp)
         {
-                perror("File opening failed");
+                perror("fdgyDoLexer");
                 return CODE_FILE_OPEN_FAIL;
         }
-        wint_t wc;
-        while ((wc = fgetwc(fp)) != WEOF)
-        {
-                if (iswspace(wc))
-                {
-                        continue;
-                }
-                else if (sym_Str(fp, wc))
-                {
-                        continue;
-                }
-                else if (sym_Comment(fp, wc))
-                {
-                        continue;
-                }
-                else if (sym_Immd(fp, wc))
-                {
-                        continue;
-                }
-                else if (sym_Reserved(fp, wc))
-                {
-                        continue;
-                }
-                else if (sym_Op(fp, wc))
-                {
-                        continue;
-                }
-                else if (sym_Name(fp, wc))
-                {
-                        continue;
-                }
-                else
-                {
-                        wprintf(L"Error: Unrecognized character: '%lc'\n", wc);
-                }
-        }
-        if (ferror(fp))
-        {
-                if (errno == EILSEQ)
-                        wprintf(L"Character encoding error while reading.\n");
-                else
-                        wprintf(L"I/O error when reading\n");
-        }
-        else if (feof(fp))
-        {
-                wprintf(L"End of file is reached successfully\n");
-                code = CODE_SUCCESS;
-        }
+        code = dgyDoLexer(fp, out, -1);
         fclose(fp);
+        return code;
+}
+
+ErrCode dgyDoLexerOnce(FILE *in, FILE *out)
+{
+        ErrCode code = CODE_FAILURE;
+        if (!in)
+        {
+                perror("dgyDoLexerOnce");
+                return CODE_NULLPTR;
+        }
+        code = dgyDoLexer(in, out, 1);
         return code;
 }

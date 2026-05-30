@@ -2,6 +2,7 @@
 
 #include "dgy_all.h"
 #include "dgy_core.h"
+#include "dgy_test.h"
 
 #define dgy_UNIT_TEST
 

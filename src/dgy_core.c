@@ -6,6 +6,10 @@ static size_t dsize = 0;
 
 static ErrCode init()
 {
+        /* Set locale */
+        setlocale(LC_ALL, "zh_CN.utf8");
+
+        /* Initialize data stack */
         dsize = 16;
         dstack = (cell_t *)malloc(dsize * sizeof(cell_t));
 
@@ -31,14 +35,18 @@ static ErrCode pop()
                 return CODE_UNDERFLOW;
         }
         --dsp;
+        if (dsp == dsize / 4 && (CODE_SUCCESS != resize(dsize / 2)))
+        {
+                return CODE_FAILURE;
+        }
         return CODE_SUCCESS;
 }
 
 static ErrCode push(cell_t data)
 {
-        if (dsp == dsize && (CODE_SUCCESS != resize(2 * dsize)))
+        if (dsp == dsize / 2 && (CODE_SUCCESS != resize(2 * dsize)))
         {
-                return CODE_OVERFLOW;
+                return CODE_FAILURE;
         }
         dstack[dsp++] = data;
         return CODE_SUCCESS;
@@ -59,21 +67,14 @@ static void dgyMov(cell_t *src, cell_t *dst)
 }
 
 static void dgyLet(int bp,
-                   int sp,
-                   void (*dgyObject)(cell_t *dstack, unsigned int dbp))
+                   int *sp,
+                   void (*dgyEval)(cell_t *dstack, int bp, int *sp))
 {
+        dgyEval(dstack, bp, sp);
 }
 
 ErrCode dgyDo()
 {
-        setlocale(LC_ALL, "zh_CN.utf8");
         init();
-        return CODE_SUCCESS;
-}
-
-ErrCode dgyUnitTest()
-{
-        fdgyDoLexer("dgy/test.dgy");
-
         return CODE_SUCCESS;
 }

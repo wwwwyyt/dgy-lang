@@ -36,6 +36,30 @@ void dgyDiv(cell_t *stack, int bp, int *sp)
         *sp = bp + 1;
 }
 
+void dgyAnd(cell_t *stack, int bp, int *sp)
+{
+        stack[bp] &= stack[bp + 1];
+        *sp = bp + 1;
+}
+
+void dgyOr(cell_t *stack, int bp, int *sp)
+{
+        stack[bp] |= stack[bp + 1];
+        *sp = bp + 1;
+}
+
+void dgyNot(cell_t *stack, int bp, int *sp)
+{
+        stack[bp] = ~stack[bp];
+        *sp = bp + 1;
+}
+
+void dgyNor(cell_t *stack, int bp, int *sp)
+{
+        stack[bp] ^= stack[bp + 1];
+        *sp = bp + 1;
+}
+
 void dgyGetFormat(cell_t *stack, int bp, int *sp)
 {
         stack[++bp] = 0;

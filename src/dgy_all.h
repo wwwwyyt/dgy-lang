@@ -17,6 +17,7 @@ typedef enum
         CODE_UNDERFLOW,
         CODE_ALLOC_FAIL,
         CODE_FILE_OPEN_FAIL,
+        CODE_NULLPTR,
 } ErrCode;
 
 typedef unsigned long long cell_t;

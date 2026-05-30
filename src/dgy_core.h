@@ -3,9 +3,8 @@
 
 #include "dgy_all.h"
 #include "dgy_object.h"
-#include "dgy_lexer.h"
+#include "dgy_parser.h"
 
 ErrCode dgyDo();
-ErrCode dgyUnitTest();
 
 #endif /* _dgy_core_h */

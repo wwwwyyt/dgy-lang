@@ -7,5 +7,6 @@
 #include "dgy_stack.h"
 
 ErrCode dgyDo();
+ErrCode dgyTestDo();
 
 #endif /* _dgy_core_h */

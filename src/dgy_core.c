@@ -47,3 +47,15 @@ ErrCode dgyDo()
         init();
         return CODE_SUCCESS;
 }
+
+ErrCode dgyTestDo()
+{
+        ErrCode code = CODE_FAILURE;
+        while (1)
+        {
+                code = dgyDoParserOnce(stdin, &dataStack);
+                dgyPrintStack(dataStack.stack, 0, &(dataStack.sp));
+        }
+
+        return code;
+}

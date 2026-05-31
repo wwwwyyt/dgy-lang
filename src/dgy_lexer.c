@@ -658,7 +658,6 @@ ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
                         matchedCnt++;
                 }
         }
-
         if (ferror(in))
         {
                 if (errno == EILSEQ)

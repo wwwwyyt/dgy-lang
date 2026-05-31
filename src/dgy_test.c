@@ -7,7 +7,7 @@
 
 ErrCode dgyUnitTest(void)
 {
-        fdgyDoParser("dgy/t1.dgy");
-        // dgyDoLexerOnce(stdin, stdout);
+        // fdgyDoParser("dgy/t1.dgy");
+        dgyDoParser(stdin);
         return CODE_SUCCESS;
 }

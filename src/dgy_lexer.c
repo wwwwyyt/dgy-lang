@@ -219,7 +219,7 @@ end:
         case HEX_END:
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                swprintf(out, MAX_BUF_SIZE, L"%ls%lc%lc", buffer, S_IMMD, L'\0');
+                swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, S_IMMD, L'\0');
                 if (outOfBuf > 0)
                 {
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
@@ -294,7 +294,7 @@ end:
         case STR_END:
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                swprintf(out, MAX_BUF_SIZE, L"%ls%lc%lc", buffer, S_STR, L'\0');
+                swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, S_STR, L'\0');
                 if (outOfBuf > 0)
                 {
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
@@ -595,7 +595,7 @@ end:
         {
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                swprintf(out, MAX_BUF_SIZE, L"%ls%lc%lc", buffer, S_NAME, L'\0');
+                swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, S_NAME, L'\0');
                 if (outOfBuf > 0)
                 {
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));

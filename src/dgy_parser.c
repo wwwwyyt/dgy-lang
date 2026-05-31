@@ -39,6 +39,11 @@ ErrCode dgyDoParser(FILE *stream)
                 {
                 case S_IMMD:
                         cell_t value = wcstoull(buffer, NULL, 0);
+                        if (errno == ERANGE)
+                        {
+                                wprintf(L"Error: number out of ranage.\n");
+                                errno = 0;
+                        }
                         wprintf(L"Immd='%llu'\n", value);
                         break;
                 case S_STR:

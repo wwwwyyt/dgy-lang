@@ -22,10 +22,10 @@ ErrCode dgyDoParser(FILE *stream)
         while (!feof(stream))
         {
                 rewind(lexerOut);
-                dgyDoLexerOnce(stream, lexerOut);
+                code = dgyDoLexerOnce(stream, lexerOut);
                 fseek(lexerOut, 0, SEEK_SET);
                 for (wint_t wc; (wc = fgetwc(lexerOut)) != WEOF;)
                         wprintf(L"%lc", wc);
         }
-        return CODE_SUCCESS;
+        return code;
 }

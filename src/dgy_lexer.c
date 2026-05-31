@@ -102,9 +102,12 @@ static int sym_Immd(FILE *in, wint_t wc, FILE *out)
                 case POS_1:
                         if (iswdigit(wc) || wc == L'_')
                         {
-                                if (bufIdx < MAX_BUF_SIZE && wc != L'_')
+                                if (bufIdx < MAX_BUF_SIZE)
                                 {
-                                        buffer[bufIdx++] = wc;
+                                        if (wc != L'_')
+                                        {
+                                                buffer[bufIdx++] = wc;
+                                        }
                                 }
                                 else
                                 {
@@ -133,9 +136,12 @@ static int sym_Immd(FILE *in, wint_t wc, FILE *out)
                 case NEG_2:
                         if (iswdigit(wc) || wc == L'_')
                         {
-                                if (bufIdx < MAX_BUF_SIZE && wc != L'_')
+                                if (bufIdx < MAX_BUF_SIZE)
                                 {
-                                        buffer[bufIdx++] = wc;
+                                        if (wc != L'_')
+                                        {
+                                                buffer[bufIdx++] = wc;
+                                        }
                                 }
                                 else
                                 {
@@ -179,7 +185,10 @@ static int sym_Immd(FILE *in, wint_t wc, FILE *out)
                         {
                                 if (bufIdx < MAX_BUF_SIZE && wc != L'_')
                                 {
-                                        buffer[bufIdx++] = wc;
+                                        if (wc != L'_')
+                                        {
+                                                buffer[bufIdx++] = wc;
+                                        }
                                 }
                                 else
                                 {

@@ -114,8 +114,18 @@ static const SymbleTable OpSymTable[] = {
     {NULL, OP_SYM_CNT},
 };
 
-ErrCode fdgyDoLexer(const char *fname, FILE *out);
-ErrCode dgyDoLexer(FILE *in, FILE *out, const int maxMatchedCnt);
-ErrCode dgyDoLexerOnce(FILE *in, FILE *out);
+enum
+{
+        MAX_IMMD_LEN = 20,
+        MAX_NAME_LEN = 1024,
+};
+enum
+{
+        MAX_STR_LEN = 1024,
+};
+
+ErrCode fdgyDoLexer(const char *fname, wchar_t *out);
+ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt);
+ErrCode dgyDoLexerOnce(FILE *in, wchar_t *out);
 
 #endif /* _dgy_lexer_h */

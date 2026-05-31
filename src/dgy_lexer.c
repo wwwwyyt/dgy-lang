@@ -5,12 +5,12 @@ static int isValidNameChar(wchar_t wc);
 
 static void sym_escape_seq(FILE *in, int *len, wchar_t *buffer);
 
-static int sym_Immd(FILE *in, wint_t wc, FILE *out);
-static int sym_Str(FILE *in, wint_t wc, FILE *out);
-static int sym_Comment(FILE *in, wint_t wc, FILE *out);
-static int sym_Reserved(FILE *in, wint_t wc, FILE *out);
-static int sym_Op(FILE *in, wint_t wc, FILE *out);
-static int sym_Name(FILE *in, wint_t wc, FILE *out);
+static int sym_Immd(FILE *in, wint_t wc, wchar_t *out);
+static int sym_Str(FILE *in, wint_t wc, wchar_t *out);
+static int sym_Comment(FILE *in, wint_t wc, wchar_t *out);
+static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out);
+static int sym_Op(FILE *in, wint_t wc, wchar_t *out);
+static int sym_Name(FILE *in, wint_t wc, wchar_t *out);
 
 static int isCharAt(wchar_t wc, wchar_t *wcs, int idx)
 {
@@ -52,7 +52,7 @@ static void sym_escape_seq(FILE *in, int *len, wchar_t *buffer)
         }
 }
 
-static int sym_Immd(FILE *in, wint_t wc, FILE *out)
+static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
 {
         enum
         {
@@ -69,7 +69,7 @@ static int sym_Immd(FILE *in, wint_t wc, FILE *out)
         };
         enum
         {
-                MAX_BUF_SIZE = 20,
+                MAX_BUF_SIZE = MAX_IMMD_LEN,
         };
         int matched = 0;
         wchar_t buffer[MAX_BUF_SIZE]; // 20 is the length of maximum number -2^63
@@ -219,8 +219,7 @@ end:
         case HEX_END:
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                fputws(buffer, out);
-                fputwc(S_IMMD, out);
+                swprintf(out, MAX_BUF_SIZE, L"%ls%lc%lc", buffer, S_IMMD, L'\0');
                 if (outOfBuf > 0)
                 {
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
@@ -230,7 +229,7 @@ end:
         return matched;
 }
 
-static int sym_Str(FILE *in, wint_t wc, FILE *out)
+static int sym_Str(FILE *in, wint_t wc, wchar_t *out)
 {
         enum
         {
@@ -241,7 +240,7 @@ static int sym_Str(FILE *in, wint_t wc, FILE *out)
         };
         enum
         {
-                MAX_BUF_SIZE = 1024,
+                MAX_BUF_SIZE = MAX_STR_LEN,
         };
         int matched = 0;
         wchar_t buffer[MAX_BUF_SIZE];
@@ -295,8 +294,7 @@ end:
         case STR_END:
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                fputws(buffer, out);
-                fputwc(S_STR, out);
+                swprintf(out, MAX_BUF_SIZE, L"%ls%lc%lc", buffer, S_STR, L'\0');
                 if (outOfBuf > 0)
                 {
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
@@ -306,7 +304,7 @@ end:
         return matched;
 }
 
-static int sym_Comment(FILE *in, wint_t wc, FILE *out)
+static int sym_Comment(FILE *in, wint_t wc, wchar_t *out)
 {
         enum
         {
@@ -383,7 +381,7 @@ end:
         return matched;
 }
 
-static int sym_Reserved(FILE *in, wint_t wc, FILE *out)
+static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
 {
         static size_t reservedgyaxLength = 0;
         if (reservedgyaxLength == 0)
@@ -462,13 +460,12 @@ end:
         if (type != RESERVED_SYM_CNT)
         {
                 matched = 1;
-                fputwc(type, out);
-                fputwc(S_RESERVED, out);
+                swprintf(out, 3, L"%lc%lc%lc", type, S_RESERVED, L'\0');
         }
         return matched;
 }
 
-static int sym_Op(FILE *in, wint_t wc, FILE *out)
+static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
 {
         static size_t opMaxLength = 0;
         if (opMaxLength == 0)
@@ -534,13 +531,12 @@ end:
         if (type != OP_SYM_CNT)
         {
                 matched = 1;
-                fputwc(type, out);
-                fputwc(S_OP, out);
+                swprintf(out, 3, L"%lc%lc%lc", type, S_OP, L'\0');
         }
         return matched;
 }
 
-static int sym_Name(FILE *in, wint_t wc, FILE *out)
+static int sym_Name(FILE *in, wint_t wc, wchar_t *out)
 {
         enum
         {
@@ -550,7 +546,7 @@ static int sym_Name(FILE *in, wint_t wc, FILE *out)
         };
         enum
         {
-                MAX_BUF_SIZE = 1024,
+                MAX_BUF_SIZE = MAX_NAME_LEN,
         };
         int status = START;
         wchar_t buffer[MAX_BUF_SIZE];
@@ -599,8 +595,7 @@ end:
         {
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                fputws(buffer, out);
-                fputwc(S_NAME, out);
+                swprintf(out, MAX_BUF_SIZE, L"%ls%lc%lc", buffer, S_NAME, L'\0');
                 if (outOfBuf > 0)
                 {
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
@@ -609,7 +604,7 @@ end:
         return matched;
 }
 
-ErrCode dgyDoLexer(FILE *in, FILE *out, const int maxMatchedCnt)
+ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
 {
         ErrCode code = CODE_FAILURE;
         if (!in)
@@ -622,7 +617,7 @@ ErrCode dgyDoLexer(FILE *in, FILE *out, const int maxMatchedCnt)
         {
                 matchedCnt = -2;
         }
-        for (wint_t wc; ((wc = fgetwc(in)) != WEOF) && (matchedCnt < maxMatchedCnt);)
+        for (wint_t wc; (matchedCnt < maxMatchedCnt) && ((wc = fgetwc(in)) != WEOF);)
         {
                 int matched = 0;
                 if (iswspace(wc))
@@ -679,7 +674,7 @@ ErrCode dgyDoLexer(FILE *in, FILE *out, const int maxMatchedCnt)
         return code;
 }
 
-ErrCode fdgyDoLexer(const char *fname, FILE *out)
+ErrCode fdgyDoLexer(const char *fname, wchar_t *out)
 {
         ErrCode code = CODE_FAILURE;
         FILE *fp = fopen(fname, "r");
@@ -693,7 +688,7 @@ ErrCode fdgyDoLexer(const char *fname, FILE *out)
         return code;
 }
 
-ErrCode dgyDoLexerOnce(FILE *in, FILE *out)
+ErrCode dgyDoLexerOnce(FILE *in, wchar_t *out)
 {
         ErrCode code = CODE_FAILURE;
         if (!in)

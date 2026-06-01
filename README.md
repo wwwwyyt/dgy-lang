@@ -202,3 +202,46 @@ DGY 是一门用于计算机教学的，以 Forth 为灵感的中文编程语言
 
 局部变量名和函数名使用小驼峰。一些需要强调下划线后内容的函数可以使用下划线。
 
+**错误处理**
+
+文件无法打开：
+
+```
+FILE *fp = fopen(fname, "r");
+if (!fp)
+{
+        perror("fdgyDoParser: fopen() failed");
+        return CODE_FAILURE;
+}
+```
+
+内存分配失败：
+
+```
+DictItem *newDict = (DictItem *)realloc(dict->dict, newSize * sizeof(DictItem));
+if (newDict == NULL)
+{
+        perror("dgy_dict: resize: realloc() failed");
+        return CODE_FAILURE;
+}
+```
+
+空指针：
+
+```
+if (!stream || !stack)
+{
+        dgySetErr(ERR_NULLPTR, L"dgyDoParser");
+        return code;
+}
+```
+
+栈下溢：
+
+```
+if (s->sp == 0)
+{
+        dgySetErr(ERR_UNDERFLOW, L"dgyStackPop");
+        return CODE_FAILURE;
+}
+```

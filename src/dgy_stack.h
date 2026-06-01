@@ -2,6 +2,7 @@
 #define _dgy_stack_h
 
 #include "dgy_all.h"
+#include "dgy_error.h"
 
 typedef struct
 {

@@ -5,7 +5,8 @@ static ErrCode resize(size_t newSize, Dictionary *dict)
         DictItem *newDict = (DictItem *)realloc(dict->dict, newSize * sizeof(DictItem));
         if (newDict == NULL)
         {
-                return CODE_ALLOC_FAIL;
+                perror("dgy_dict: resize: realloc() failed");
+                return CODE_FAILURE;
         }
         dict->dict = newDict;
         dict->size = newSize;
@@ -19,7 +20,8 @@ ErrCode dgyDictInit(Dictionary *dict, size_t size)
         dict->dict = (DictItem *)malloc(dict->size * sizeof(DictItem));
         if (dict->dict == NULL)
         {
-                return CODE_ALLOC_FAIL;
+                perror("dgyDictInit: malloc() failed");
+                return CODE_FAILURE;
         }
         return CODE_SUCCESS;
 }
@@ -31,7 +33,6 @@ ErrCode dgyDictAdd(const wchar_t *name, int entry, Dictionary *dict)
         newItem.name = (wchar_t *)malloc(nameLen * sizeof(wchar_t));
         wcscpy(newItem.name, name);
         newItem.entry = entry;
-
         if (dict->top == dict->size / 2 && (CODE_SUCCESS != resize(2 * dict->size, dict)))
         {
                 return CODE_FAILURE;

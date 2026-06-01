@@ -6,8 +6,8 @@ ErrCode dgyStackInit(DgyStack *s, size_t size)
         s->stack = (cell_t *)malloc(s->size * sizeof(cell_t));
         if (s->stack == NULL)
         {
-                perror("dgyStackInit");
-                return CODE_ALLOC_FAIL;
+                perror("dgyStackInit: malloc() failed");
+                return CODE_FAILURE;
         }
         return CODE_SUCCESS;
 }
@@ -17,7 +17,8 @@ ErrCode dgyStackResize(DgyStack *s, size_t newSize)
         cell_t *newStack = (cell_t *)realloc(s->stack, newSize * sizeof(cell_t));
         if (newStack == NULL)
         {
-                return CODE_ALLOC_FAIL;
+                perror("dgyStackResize: realloc() failed");          
+                return CODE_FAILURE;
         }
         s->stack = newStack;
         s->size = newSize;
@@ -28,7 +29,8 @@ ErrCode dgyStackPop(DgyStack *s)
 {
         if (s->sp == 0)
         {
-                return CODE_UNDERFLOW;
+                dgySetErr(ERR_UNDERFLOW, L"dgyStackPop");
+                return CODE_FAILURE;
         }
         --(s->sp);
         if (s->sp == s->size / 4 && (CODE_SUCCESS != dgyStackResize(s, s->size / 2)))

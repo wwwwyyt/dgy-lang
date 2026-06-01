@@ -2,15 +2,16 @@
 #define _dgy_lexer_h
 
 #include "dgy_all.h"
+#include "dgy_error.h"
 
 #define ERR_UNCLOSED_SYMBLE(sym) \
-        L"\nError: Unclosed symble: '" sym "'\n"
+        L"Error: Unclosed symble: '" sym "'\n"
 #define ERR_INVALID_SYMBLE(sym) \
-        L"\nError: Invalid symble: '" sym "'\n"
+        L"Error: Invalid symble: '" sym "'\n"
 #define ERR_EXPECT_SYMBLE(sym) \
-        L"\nError: Expect symble: '" sym "'\n"
+        L"Error: Expect symble: '" sym "'\n"
 #define WARN_OUT_OF_BUFFER(len) \
-        L"\nWarning: Out of buffer. Exceeding length: %d\n", len
+        L"Warning: Out of buffer. Exceeding length: %d\n", len
 
 typedef enum
 {
@@ -25,7 +26,7 @@ typedef enum
 
 typedef struct
 {
-        wchar_t *symble;
+        const wchar_t *symble;
         int type;
 } SymbleTable;
 

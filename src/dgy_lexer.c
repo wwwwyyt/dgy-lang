@@ -1,6 +1,6 @@
 #include "dgy_lexer.h"
 
-static int isCharAt(wchar_t wc, wchar_t *wcs, int idx);
+static int isCharAt(wchar_t wc, const wchar_t *wcs, int idx);
 static int isValidNameChar(wchar_t wc);
 
 static void sym_escape_seq(FILE *in, int *len, wchar_t *buffer);
@@ -12,7 +12,7 @@ static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out);
 static int sym_Op(FILE *in, wint_t wc, wchar_t *out);
 static int sym_Name(FILE *in, wint_t wc, wchar_t *out);
 
-static int isCharAt(wchar_t wc, wchar_t *wcs, int idx)
+static int isCharAt(wchar_t wc, const wchar_t *wcs, int idx)
 {
         if (idx >= wcslen(wcs))
                 return 0;
@@ -555,7 +555,6 @@ static int sym_Name(FILE *in, wint_t wc, wchar_t *out)
         int outOfBuf = 0;
         if (!iswdigit(wc) && isValidNameChar(wc))
         {
-
                 buffer[bufIdx++] = wc;
                 status = NAME_1;
         }
@@ -607,10 +606,10 @@ end:
 ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
 {
         ErrCode code = CODE_FAILURE;
-        if (!in)
+        if (!in || !out)
         {
-                perror("dgyDoLexer");
-                return CODE_NULLPTR;
+                dgySetErr(ERR_NULLPTR, L"dgyDoLexer");
+                return CODE_FAILURE;
         }
         int matchedCnt = 0;
         if (maxMatchedCnt == -1) /* If maxMatchedCnt == -1, set matchedCnt to a number smaller than -1. */
@@ -650,7 +649,7 @@ ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
                 }
                 else
                 {
-                        wprintf(L"\nError: Unrecognized character: '%lc'\n", wc);
+                        wprintf(L"Error: Unrecognized character: '%lc'\n", wc);
                 }
                 // check matched
                 if (matched && maxMatchedCnt != -1) /* If maxMatchedCnt == -1, never increment matchedCnt. */
@@ -661,13 +660,13 @@ ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
         if (ferror(in))
         {
                 if (errno == EILSEQ)
-                        wprintf(L"\nCharacter encoding error while reading.\n");
+                        wprintf(L"Character encoding error while reading.\n");
                 else
-                        wprintf(L"\nI/O error when reading\n");
+                        wprintf(L"I/O error when reading\n");
         }
         else if (feof(in))
         {
-                wprintf(L"\nEnd of stream is reached successfully\n");
+                wprintf(L"End of stream is reached successfully\n");
                 code = CODE_SUCCESS;
         }
         return code;
@@ -679,8 +678,8 @@ ErrCode fdgyDoLexer(const char *fname, wchar_t *out)
         FILE *fp = fopen(fname, "r");
         if (!fp)
         {
-                perror("fdgyDoLexer");
-                return CODE_FILE_OPEN_FAIL;
+                perror("fdgyDoLexer: fopen() failed");
+                return CODE_FAILURE;
         }
         code = dgyDoLexer(fp, out, -1);
         fclose(fp);
@@ -689,12 +688,7 @@ ErrCode fdgyDoLexer(const char *fname, wchar_t *out)
 
 ErrCode dgyDoLexerOnce(FILE *in, wchar_t *out)
 {
-        ErrCode code = CODE_FAILURE;
-        if (!in)
-        {
-                perror("dgyDoLexerOnce");
-                return CODE_NULLPTR;
-        }
+        ErrCode code = CODE_FAILURE;        
         code = dgyDoLexer(in, out, 1);
         return code;
 }

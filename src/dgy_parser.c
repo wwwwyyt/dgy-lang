@@ -1,54 +1,80 @@
 #include "dgy_parser.h"
 
-static inline void parseImmd(DgyStack *stack, wchar_t *buffer)
+static ErrCode getSymble(FILE *in, wchar_t *buffer, SymbleType *type, const size_t bufSize);
+static int match_SimpObj(FILE *in, wchar_t *buffer, const size_t bufSize);
+
+static ErrCode getSymble(FILE *in, wchar_t *buffer, SymbleType *type, const size_t bufSize)
 {
-        cell_t value = wcstoull(buffer, NULL, 0);
-        if (errno == ERANGE)
+        ErrCode code = dgyDoLexerOnce(in, buffer);
+        if (code != CODE_SUCCESS)
+                return code;
+        for (int i = 0; i < bufSize - 1; ++i)
         {
-                wprintf(L"Error: number out of ranage.\n");
-                errno = 0;
+                if (buffer[i + 1] == L'\0')
+                {
+                        *type = buffer[i];
+                        buffer[i] = L'\0';
+                        break;
+                }
         }
-        wprintf(L"Immd='%llu'\n", value);
-        dgyStackPush(stack, value);
-        dgyStackPush(stack, S_IMMD);
+        return code;
 }
 
-static inline void parseStr(DgyStack *stack, wchar_t *buffer)
+static int match_value(FILE *in, wchar_t *buffer, const size_t bufSize)
 {
-        wprintf(L"Str='%ls'\n", buffer);
-        int len;
-        for (len = 0; buffer[len] != L'\0'; ++len)
+        int matched = 0;
+        
+        return matched;
+}
+
+static int match_cell(FILE *in, wchar_t *buffer, const size_t bufSize)
+{
+        int matched = 0;
+        return matched;        
+}
+
+static int match_valuecell(FILE *in, wchar_t *buffer, const size_t bufSize)
+{
+        int matched = 0;
+        return matched;
+}
+
+static int match_SimpObj(FILE *in, wchar_t *buffer, const size_t bufSize)
+{
+        enum
         {
-                dgyStackPush(stack, buffer[len]);
-        }
-        dgyStackPush(stack, len);
-        dgyStackPush(stack, S_STR);
-}
-
-static inline void parseReserved(DgyStack *stack, wchar_t *buffer)
-{
-        wprintf(L"Reserved='%ls'\n", ReservedSymTable[buffer[0]].symble);
-        dgyStackPush(stack, buffer[0]);
-        dgyStackPush(stack, S_RESERVED);
-}
-
-static inline void parseOp(DgyStack *stack, wchar_t *buffer)
-{
-        wprintf(L"Op='%ls'\n", OpSymTable[buffer[0]].symble);
-        dgyStackPush(stack, buffer[0]);
-        dgyStackPush(stack, S_OP);
-}
-
-static inline void parseName(DgyStack *stack, wchar_t *buffer)
-{
-        wprintf(L"Name='%ls'\n", buffer);
-        int len;
-        for (len = 0; buffer[len] != L'\0'; ++len)
+                START,
+                STAT_1,
+                STAT_2,
+                END,
+        };
+        int matched = 0;
+        SymbleType type = S_UNDEFINED;
+        int status = START;
+        while (CODE_SUCCESS == getSymble(in, buffer, &type, bufSize))
         {
-                dgyStackPush(stack, buffer[len]);
+                switch (status)
+                {
+                case START:
+                        if (type == S_NAME)
+                        {
+                                status = STAT_1;
+                        }
+                        break;
+                case STAT_1:
+                        if (type == S_OP && buffer[0] == S_EQ)
+                        {
+                                status = STAT_2;
+                        }
+                        break;
+                case STAT_2:
+                        if (match_valuecell(in, buffer, bufSize))
+                        break;
+                case END:
+                        break;
+                }
         }
-        dgyStackPush(stack, len);
-        dgyStackPush(stack, S_NAME);
+        return matched;
 }
 
 ErrCode fdgyDoParser(const char *fname, DgyStack *stack)
@@ -57,8 +83,8 @@ ErrCode fdgyDoParser(const char *fname, DgyStack *stack)
         FILE *fp = fopen(fname, "r");
         if (!fp)
         {
-                perror("fdgyDoParser");
-                return CODE_FILE_OPEN_FAIL;
+                perror("fdgyDoParser: fopen() failed");
+                return CODE_FAILURE;
         }
         code = dgyDoParser(fp, stack, -1);
         fclose(fp);
@@ -72,10 +98,10 @@ ErrCode dgyDoParser(FILE *stream, DgyStack *stack, const int maxMatchedCnt)
                 MAX_BUF_SIZE = MAX_NAME_LEN + 2,
         };
         ErrCode code = CODE_FAILURE;
-        if (!stream)
+        if (!stream || !stack)
         {
-                perror("dgyDoParser");
-                return CODE_NULLPTR;
+                dgySetErr(ERR_NULLPTR, L"dgyDoParser");
+                return code;
         }
         wchar_t buffer[MAX_BUF_SIZE];
         int matchedCnt = 0;
@@ -86,45 +112,15 @@ ErrCode dgyDoParser(FILE *stream, DgyStack *stack, const int maxMatchedCnt)
         for (; (matchedCnt < maxMatchedCnt) && !feof(stream);)
         {
                 int matched = 0;
-                code = dgyDoLexerOnce(stream, buffer);
-                SymbleType type = S_UNDEFINED;
-                for (int i = 0; i < MAX_BUF_SIZE - 1; ++i)
+                if (match_SimpObj(stream, buffer, MAX_BUF_SIZE))
                 {
-                        if (buffer[i + 1] == L'\0')
-                        {
-                                type = buffer[i];
-                                buffer[i] = L'\0';
-                                break;
-                        }
+                        matched = 1;
                 }
-                switch (type)
+                else
                 {
-                case S_IMMD:
-                        parseImmd(stack, buffer);
-                        matched = 1;
-                        break;
-                case S_STR:
-                        parseStr(stack, buffer);
-                        matched = 1;
-                        break;
-                case S_COMMENT:
-                        break;
-                case S_RESERVED:
-                        parseReserved(stack, buffer);
-                        matched = 1;
-                        break;
-                case S_OP:
-                        parseOp(stack, buffer);
-                        matched = 1;
-                        break;
-                case S_NAME:
-                        parseName(stack, buffer);
-                        matched = 1;
-                        break;
-                default:
-                        wprintf(L"Undefined symble.\n");
-                        break;
+                        
                 }
+                
                 // check matched
                 if (matched && maxMatchedCnt != -1) /* If maxMatchedCnt == -1, never increment matchedCnt. */
                 {
@@ -137,11 +133,6 @@ ErrCode dgyDoParser(FILE *stream, DgyStack *stack, const int maxMatchedCnt)
 ErrCode dgyDoParserOnce(FILE *stream, DgyStack *stack)
 {
         ErrCode code = CODE_FAILURE;
-        if (!stream)
-        {
-                perror("dgyDoParserOnce");
-                return CODE_NULLPTR;
-        }
         code = dgyDoParser(stream, stack, 1);
         return code;
 }

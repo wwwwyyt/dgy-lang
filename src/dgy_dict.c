@@ -1,7 +1,5 @@
 #include "dgy_dict.h"
 
-static Dictionary objectDict;
-
 static ErrCode resize(size_t newSize, Dictionary *dict)
 {
         DictItem *newDict = (DictItem *)realloc(dict->dict, newSize * sizeof(DictItem));
@@ -14,12 +12,12 @@ static ErrCode resize(size_t newSize, Dictionary *dict)
         return CODE_SUCCESS;
 }
 
-ErrCode dgyDictInit()
+ErrCode dgyDictInit(Dictionary *dict, size_t size)
 {
-        objectDict.size = 16;
-        objectDict.top = 0;
-        objectDict.dict = (DictItem *)malloc(objectDict.size * sizeof(DictItem));
-        if (objectDict.dict == NULL)
+        dict->size = size;
+        dict->top = 0;
+        dict->dict = (DictItem *)malloc(dict->size * sizeof(DictItem));
+        if (dict->dict == NULL)
         {
                 return CODE_ALLOC_FAIL;
         }
@@ -54,4 +52,24 @@ int dgyDictSearch(const wchar_t *name, Dictionary *dict)
                 }
         }
         return entry;
+}
+
+ErrCode dgyDictForget(const wchar_t *name, Dictionary *dict)
+{
+        int entry = dgyDictSearch(name, dict);
+        if (entry == -1)
+        {
+                return CODE_SUCCESS;
+        }
+        for (int i = entry; i < dict->top - 1; ++i)
+        {
+                dict->dict[i].name = dict->dict[i + 1].name;
+                dict->dict[i].entry = dict->dict[i + 1].entry;
+        }
+        (dict->top)--;
+        if (dict->top == dict->size / 4 && (CODE_SUCCESS != resize(dict->size / 2, dict)))
+        {
+                return CODE_FAILURE;
+        }        
+        return CODE_SUCCESS;
 }

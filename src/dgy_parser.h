@@ -4,6 +4,7 @@
 #include "dgy_all.h"
 #include "dgy_lexer.h"
 #include "dgy_stack.h"
+#include "dgy_dict.h"
 
 ErrCode fdgyDoParser(const char *fname, DgyStack *stack);
 ErrCode dgyDoParser(FILE *stream, DgyStack *stack, const int maxMatchedCnt);

@@ -1,5 +1,56 @@
 #include "dgy_parser.h"
 
+static inline void parseImmd(DgyStack *stack, wchar_t *buffer)
+{
+        cell_t value = wcstoull(buffer, NULL, 0);
+        if (errno == ERANGE)
+        {
+                wprintf(L"Error: number out of ranage.\n");
+                errno = 0;
+        }
+        wprintf(L"Immd='%llu'\n", value);
+        dgyStackPush(stack, value);
+        dgyStackPush(stack, S_IMMD);
+}
+
+static inline void parseStr(DgyStack *stack, wchar_t *buffer)
+{
+        wprintf(L"Str='%ls'\n", buffer);
+        int len;
+        for (len = 0; buffer[len] != L'\0'; ++len)
+        {
+                dgyStackPush(stack, buffer[len]);
+        }
+        dgyStackPush(stack, len);
+        dgyStackPush(stack, S_STR);
+}
+
+static inline void parseReserved(DgyStack *stack, wchar_t *buffer)
+{
+        wprintf(L"Reserved='%ls'\n", ReservedSymTable[buffer[0]].symble);
+        dgyStackPush(stack, buffer[0]);
+        dgyStackPush(stack, S_RESERVED);
+}
+
+static inline void parseOp(DgyStack *stack, wchar_t *buffer)
+{
+        wprintf(L"Op='%ls'\n", OpSymTable[buffer[0]].symble);
+        dgyStackPush(stack, buffer[0]);
+        dgyStackPush(stack, S_OP);
+}
+
+static inline void parseName(DgyStack *stack, wchar_t *buffer)
+{
+        wprintf(L"Name='%ls'\n", buffer);
+        int len;
+        for (len = 0; buffer[len] != L'\0'; ++len)
+        {
+                dgyStackPush(stack, buffer[len]);
+        }
+        dgyStackPush(stack, len);
+        dgyStackPush(stack, S_NAME);
+}
+
 ErrCode fdgyDoParser(const char *fname, DgyStack *stack)
 {
         ErrCode code = CODE_FAILURE;
@@ -49,47 +100,25 @@ ErrCode dgyDoParser(FILE *stream, DgyStack *stack, const int maxMatchedCnt)
                 switch (type)
                 {
                 case S_IMMD:
-                        cell_t value = wcstoull(buffer, NULL, 0);
-                        if (errno == ERANGE)
-                        {
-                                wprintf(L"Error: number out of ranage.\n");
-                                errno = 0;
-                        }
-                        wprintf(L"Immd='%llu'\n", value);
-                        dgyStackPush(stack, value);
-                        dgyStackPush(stack, type);
+                        parseImmd(stack, buffer);
                         matched = 1;
                         break;
                 case S_STR:
-                        wprintf(L"Str='%ls'\n", buffer);
-                        for (int i = 0; buffer[i] != L'\0'; ++i)
-                        {
-                                dgyStackPush(stack, buffer[i]);
-                        }
-                        dgyStackPush(stack, type);
+                        parseStr(stack, buffer);
                         matched = 1;
                         break;
                 case S_COMMENT:
                         break;
                 case S_RESERVED:
-                        wprintf(L"Reserved='%ls'\n", ReservedSymTable[buffer[0]].symble);
-                        dgyStackPush(stack, buffer[0]);
-                        dgyStackPush(stack, type);
+                        parseReserved(stack, buffer);
                         matched = 1;
                         break;
                 case S_OP:
-                        wprintf(L"Op='%ls'\n", OpSymTable[buffer[0]].symble);
-                        dgyStackPush(stack, buffer[0]);
-                        dgyStackPush(stack, type);
+                        parseOp(stack, buffer);
                         matched = 1;
                         break;
                 case S_NAME:
-                        wprintf(L"Name='%ls'\n", buffer);
-                        for (int i = 0; buffer[i] != L'\0'; ++i)
-                        {
-                                dgyStackPush(stack, buffer[i]);
-                        }
-                        dgyStackPush(stack, type);
+                        parseName(stack, buffer);
                         matched = 1;
                         break;
                 default:

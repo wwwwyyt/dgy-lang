@@ -1,6 +1,25 @@
 #include "dgy_core.h"
 
 static DgyStack dataStack;
+static DgyStack codeStack;
+static Dictionary nameDict;
+
+static ErrCode nameDictInit(void)
+{
+        ErrCode code = dgyDictInit(&nameDict, 16);
+        if (code != CODE_SUCCESS)
+                return code;
+
+        code = dgyDictAdd(L"相加", 0, &nameDict);
+        if (code != CODE_SUCCESS)
+                return code;
+
+        code = dgyDictAdd(L"相减", 1, &nameDict);
+        if (code != CODE_SUCCESS)
+                return code;
+
+        return code;
+}
 
 static ErrCode init()
 {
@@ -11,6 +30,18 @@ static ErrCode init()
 
         /* Initialize data stack */
         code = dgyStackInit(&dataStack, 16);
+        if (code != CODE_SUCCESS)
+                return code;
+
+        /* Initialize code stack */
+        code = dgyStackInit(&codeStack, 16);
+        if (code != CODE_SUCCESS)
+                return code;
+       
+        /* Initialize name dictionary */
+        code = nameDictInit();
+        if (code != CODE_SUCCESS)
+                return code;
 
         return code;
 }
@@ -53,8 +84,9 @@ ErrCode dgyTestDo()
         ErrCode code = CODE_FAILURE;
         while (1)
         {
-                code = dgyDoParserOnce(stdin, &dataStack);
-                dgyPrintStack(dataStack.stack, 0, &(dataStack.sp));
+                code = dgyDoParserOnce(stdin, &codeStack);
+                dgyPrintStack(codeStack.stack, 0, &(codeStack.sp));
+                
         }
 
         return code;

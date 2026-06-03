@@ -294,7 +294,8 @@ end:
         case STR_END:
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, S_STR, L'\0');
+                SymbleType type = (bufIdx == 1) ? S_CHAR : S_STR;
+                swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, type, L'\0');
                 if (outOfBuf > 0)
                 {
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
@@ -605,7 +606,7 @@ end:
 
 ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
 {
-        ErrCode code = CODE_FAILURE;
+        ErrCode code = CODE_SUCCESS;
         if (!in || !out)
         {
                 dgySetErr(ERR_NULLPTR, L"dgyDoLexer");
@@ -663,11 +664,15 @@ ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
                         wprintf(L"Character encoding error while reading.\n");
                 else
                         wprintf(L"I/O error when reading\n");
+                code = CODE_FAILURE;
         }
         else if (feof(in))
         {
-                wprintf(L"End of stream is reached successfully\n");
-                code = CODE_SUCCESS;
+                if (matchedCnt < maxMatchedCnt)
+                {
+                        wprintf(L"dgyDoLexer: Cannot get enough matched results\n");
+                        code = CODE_FAILURE;
+                }
         }
         return code;
 }

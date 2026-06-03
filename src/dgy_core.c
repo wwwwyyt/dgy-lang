@@ -82,12 +82,12 @@ ErrCode dgyDo()
 ErrCode dgyTestDo()
 {
         ErrCode code = CODE_FAILURE;
-        while (1)
-        {
-                code = dgyDoParserOnce(stdin, &codeStack);
-                dgyPrintStack(codeStack.stack, 0, &(codeStack.sp));
-                
-        }
+        /* while (1) */
+        /* { */
+        /*         code = dgyDoParserOnce(stdin, &codeStack); */
+        /*         dgyPrintStack(codeStack.stack, 0, &(codeStack.sp));                 */
+        /* } */
+        code = fdgyDoParser("dgy/t1.dgy", &codeStack);
 
         return code;
 }

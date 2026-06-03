@@ -18,6 +18,7 @@ typedef enum
         S_UNDEFINED,
         S_IMMD,
         S_STR,
+        S_CHAR, /* String which length == 1 */
         S_COMMENT,
         S_RESERVED,
         S_OP,

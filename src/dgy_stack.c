@@ -58,3 +58,9 @@ cell_t dgyStackTop(DgyStack *s)
         }
         return s->stack[s->sp - 1];
 }
+
+void dgyStackDestroy(DgyStack *s)
+{
+        free(s->stack);
+        memset(s, 0, sizeof(DgyStack));
+}

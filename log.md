@@ -840,3 +840,23 @@ CELL_1 + NAME = END
 CELL_1 + IMMD = END
 ```
 
+## 2026-06-04
+
+1
+
+```
+1 static int match_SimpObj(DgyStack *analysisStack);
+2 static int match_ObjBegin(DgyStack *analysisStack);
+3 static int match_ObjEnd(DgyStack *analysisStack);
+4 static int match_Mov(DgyStack *analysisStack);
+5 static int match_SetReg(DgyStack *analysisStack);
+6 static int match_Exec(DgyStack *analysisStack);
+7 static int match_If(DgyStack *analysisStack);
+8 static int match_Else(DgyStack *analysisStack);
+9 static int match_ElseEnd(DgyStack *analysisStack);
+10 static int match_Hereis(DgyStack *analysisStack);
+11 static int match_Goto(DgyStack *analysisStack);
+12 static int match_LoopBegin(DgyStack *analysisStack);
+13 static int match_LoopCheck(DgyStack *analysisStack);
+14 static int match_LoopEnd(DgyStack *analysisStack);
+```

@@ -27,13 +27,14 @@ typedef enum
 {
         // Must be the same order of ReservedSymTable.type
         S_RESERVED_UNDEFINED = 0,
-        S_JIAN_CE_TIAO_JIAN,
         S_CHONG_FU_ZHI_XING,
         S_FOU_ZE_JIE_SHU,
         S_JIE_GUO_CUN,
         S_BU_CHENG_LI,
         S_WU_TIAO_JIAN,
         S_ZHE_LI_SHI,
+        S_JIAN_CE,
+        S_TIAO_JIAN,
         S_CHENG_LI,
         S_ZHI_DAO,
         S_FOU_ZE,
@@ -50,14 +51,15 @@ typedef enum
 
 static const SymbleTable ReservedSymTable[] = {
         // Must be sorted in descending order of length
-        {NULL, 0},
-        {L"检测条件", S_JIAN_CE_TIAO_JIAN},
+        {NULL, 0},        
         {L"重复执行", S_CHONG_FU_ZHI_XING},
         {L"否则结束", S_FOU_ZE_JIE_SHU},
         {L"结果存", S_JIE_GUO_CUN},
         {L"不成立", S_BU_CHENG_LI},
         {L"无条件", S_WU_TIAO_JIAN},
         {L"这里是", S_ZHE_LI_SHI},
+        {L"检测", S_JIAN_CE},
+        {L"条件", S_TIAO_JIAN},
         {L"成立", S_CHENG_LI},
         {L"直到", S_ZHI_DAO},
         {L"否则", S_FOU_ZE},

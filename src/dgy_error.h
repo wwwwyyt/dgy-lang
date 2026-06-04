@@ -3,6 +3,15 @@
 
 #include "dgy_all.h"
 
+#define ERR_UNCLOSED_SYMBLE(sym) \
+        L"Error: Unclosed symble: '" sym "'\n"
+#define ERR_INVALID_SYMBLE(sym) \
+        L"Error: Invalid symble: '" sym "'\n"
+#define ERR_EXPECT_SYMBLE(sym) \
+        L"Error: Expect symble: '" sym "'\n"
+#define WARN_OUT_OF_BUFFER(len) \
+        L"Warning: Out of buffer. Exceeding length: %d\n", len
+
 typedef enum
 {
         CODE_SUCCESS = 0,

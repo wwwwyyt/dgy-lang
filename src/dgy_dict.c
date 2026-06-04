@@ -15,6 +15,7 @@ static ErrCode resize(size_t newSize, Dictionary *dict)
 
 ErrCode dgyDictInit(Dictionary *dict, size_t size)
 {
+        memset(dict, 0, sizeof(Dictionary));
         dict->size = size;
         dict->top = 0;
         dict->dict = (DictItem *)malloc(dict->size * sizeof(DictItem));

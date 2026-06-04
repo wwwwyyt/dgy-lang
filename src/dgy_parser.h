@@ -6,6 +6,8 @@
 #include "dgy_stack.h"
 #include "dgy_dict.h"
 
+enum { MATCH_COMPLETED = -1 };
+
 ErrCode fdgyDoParser(const char *fname, DgyStack *stack);
 ErrCode dgyDoParser(FILE *stream, DgyStack *stack, const int maxMatchedCnt);
 ErrCode dgyDoParserOnce(FILE *stream, DgyStack *stack);

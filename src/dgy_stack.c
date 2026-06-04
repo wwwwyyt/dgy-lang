@@ -2,6 +2,7 @@
 
 ErrCode dgyStackInit(DgyStack *s, size_t size)
 {
+        memset(s, 0, sizeof(DgyStack));
         s->size = size;
         s->stack = (cell_t *)malloc(s->size * sizeof(cell_t));
         if (s->stack == NULL)
@@ -50,13 +51,18 @@ ErrCode dgyStackPush(DgyStack *s, cell_t data)
         return CODE_SUCCESS;
 }
 
-cell_t dgyStackTop(DgyStack *s)
+cell_t dgyStackTop(const DgyStack *s)
 {
         if (s->sp == 0)
         {
                 return 0;
         }
         return s->stack[s->sp - 1];
+}
+
+int dgyStackEmpty(const DgyStack *s)
+{
+        return s->sp == 0;
 }
 
 void dgyStackDestroy(DgyStack *s)

@@ -29,6 +29,8 @@ static int isValidNameChar(wchar_t wc)
                 return 1;
         else if (iswdigit(wc)) // 0-9
                 return 1;
+        else if (wc == L'_') // underline
+                return 1;
         else
                 return 0;
 }
@@ -57,11 +59,9 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
         enum
         {
                 START,
-                POS_1,
-                POS_END,
-                NEG_1,
-                NEG_2,
-                NEG_END,
+                INT_1,
+                INT_2,
+                INT_END,
                 HEX_1,
                 HEX_2,
                 HEX_3,
@@ -76,64 +76,42 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
         int bufIdx = 0;
         int outOfBuf = 0;
         int status = START;
-        if (wc != L'0' && iswdigit(wc))
+        if (wc == L'+' || wc == L'-')
         {
-                status = POS_1; // positive integer
+                status = INT_1; // integer
                 buffer[bufIdx++] = wc;
         }
-        else if (wc == L'-')
+        else if (wc != L'0' && iswdigit(wc))
         {
-                status = NEG_1; // negative integer
-                buffer[bufIdx++] = wc;
+                status = INT_2; // integer
+                buffer[bufIdx++] = wc;          
         }
         else if (wc == L'0')
         {
-                status = HEX_1; // hexadecimal integer
+                status = HEX_1; // hexdecimal
                 buffer[bufIdx++] = wc;
         }
         else
         {
-                goto end;
+                goto end; // Not an immediate number
         }
         while ((wc = fgetwc(in)) != WEOF)
         {
                 switch (status)
                 {
-                case POS_1:
-                        if (iswdigit(wc) || wc == L'_')
+                case INT_1:
+                        if (iswdigit(wc))
                         {
-                                if (bufIdx < MAX_BUF_SIZE)
-                                {
-                                        if (wc != L'_')
-                                        {
-                                                buffer[bufIdx++] = wc;
-                                        }
-                                }
-                                else
-                                {
-                                        outOfBuf++;
-                                }
-                        }
-                        else
-                        {
-                                status = POS_END;
-                                ungetwc(wc, in);
-                                goto end;
-                        }
-                        break;
-                case NEG_1:
-                        if (wc != L'0' && iswdigit(wc))
-                        {
-                                status = NEG_2;
+                                status = INT_2;
                                 buffer[bufIdx++] = wc;
                         }
                         else
-                        {
+                        {                                
                                 ungetwc(wc, in);
-                                goto end; // expect digits
+                                goto end; // Expect digits
                         }
                         break;
-                case NEG_2:
+                case INT_2:
                         if (iswdigit(wc) || wc == L'_')
                         {
                                 if (bufIdx < MAX_BUF_SIZE)
@@ -150,7 +128,7 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
                         }
                         else
                         {
-                                status = NEG_END;
+                                status = INT_END;
                                 ungetwc(wc, in);
                                 goto end;
                         }
@@ -163,9 +141,8 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
                         }
                         else
                         {
-                                status = POS_END;
+                                status = INT_2;
                                 ungetwc(wc, in);
-                                goto end;
                         }
                         break;
                 case HEX_2:
@@ -177,13 +154,13 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
                         else
                         {
                                 ungetwc(wc, in);
-                                goto end; // expect xdigit
+                                goto end; // Expect xdigits
                         }
                         break;
                 case HEX_3:
                         if (iswxdigit(wc) || wc == L'_')
                         {
-                                if (bufIdx < MAX_BUF_SIZE && wc != L'_')
+                                if (bufIdx < MAX_BUF_SIZE)
                                 {
                                         if (wc != L'_')
                                         {
@@ -204,18 +181,16 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
                         break;
                 }
         }
-
 end:
         switch (status)
         {
-        case NEG_1:
+        case INT_1:
                 wprintf(ERR_EXPECT_SYMBLE("digits"));
                 break;
         case HEX_2:
                 wprintf(ERR_EXPECT_SYMBLE("xdigits"));
                 break;
-        case POS_END:
-        case NEG_END:
+        case INT_END:
         case HEX_END:
                 matched = 1;
                 buffer[bufIdx] = L'\0';
@@ -375,6 +350,8 @@ end:
                 break;
         case CMT_END:
                 matched = 1;
+                SymbleType type = S_COMMENT;
+                swprintf(out, 2, L"%lc%lc", type, L'\0');
                 break;
         default:
                 break;
@@ -384,10 +361,11 @@ end:
 
 static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
 {
+        enum { START = 1 };
         static size_t reservedgyaxLength = 0;
         if (reservedgyaxLength == 0)
         {
-                for (int i = 0; i < OP_SYM_CNT; ++i)
+                for (int i = START; i < RESERVED_SYM_CNT; ++i)
                 {
                         size_t len = wcslen(ReservedSymTable[i].symble);
                         if (len > reservedgyaxLength)
@@ -398,9 +376,9 @@ static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
         int bufIdx = 0;
 
         int idx = 0;
-        ReservedSymType type = RESERVED_SYM_CNT; // Init with an invalid type
+        ReservedSymType type = S_RESERVED_UNDEFINED; // Init with an invalid type
         int matched = 0;
-        for (int i = 0; i < RESERVED_SYM_CNT; ++i)
+        for (int i = START; i < RESERVED_SYM_CNT; ++i)
         {
                 idx = 0;
                 if (isCharAt(wc, ReservedSymTable[i].symble, idx))
@@ -458,7 +436,7 @@ static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
         }
 end:
         free(buffer);
-        if (type != RESERVED_SYM_CNT)
+        if (type != S_RESERVED_UNDEFINED)
         {
                 matched = 1;
                 swprintf(out, 3, L"%lc%lc%lc", type, S_RESERVED, L'\0');
@@ -468,10 +446,11 @@ end:
 
 static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
 {
+        enum { START = 1 };
         static size_t opMaxLength = 0;
         if (opMaxLength == 0)
         {
-                for (int i = 0; i < OP_SYM_CNT; ++i)
+                for (int i = START; i < OP_SYM_CNT; ++i)
                 {
                         size_t len = wcslen(OpSymTable[i].symble);
                         if (len > opMaxLength)
@@ -482,9 +461,9 @@ static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
         int bufIdx = 0;
 
         int idx = 0;
-        OpSymType type = OP_SYM_CNT; // Init with an invalid type
+        OpSymType type = S_OP_UNDEFINED; // Init with an invalid type
         int matched = 0;
-        for (int i = 0; i < OP_SYM_CNT; ++i)
+        for (int i = START; i < OP_SYM_CNT; ++i)
         {
                 idx = 0;
                 if (isCharAt(wc, OpSymTable[i].symble, idx))
@@ -529,7 +508,7 @@ static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
         }
 end:
         free(buffer);
-        if (type != OP_SYM_CNT)
+        if (type != S_OP_UNDEFINED)
         {
                 matched = 1;
                 swprintf(out, 3, L"%lc%lc%lc", type, S_OP, L'\0');
@@ -604,6 +583,64 @@ end:
         return matched;
 }
 
+static int sym_Cell(FILE *in, wint_t wc, wchar_t *out)
+{
+        enum
+        {
+                START,
+                CELL_1,
+                CELL_2,
+                END,
+        };
+        int matched = 0;
+        int status = START;
+        enum
+        {
+                MAX_BUF_SIZE = MAX_NAME_LEN + 2,
+        };                
+        wchar_t buffer[MAX_BUF_SIZE];
+        if (wc == L'#')
+        {
+                status = CELL_1;
+                if ((wc = fgetwc(in)) != EOF)
+                {
+                        status = CELL_2;
+                        if (sym_Immd(in, wc, buffer) || sym_Name(in, wc, buffer))
+                        {
+                                status = END;
+                                goto end;
+                        }
+                        else
+                        {
+                                // status = CELL_2
+                                goto end; // Expect "Name" or "Immd"
+                        }
+                }
+                else
+                {
+                        // status = CELL_1
+                        goto end; // Expect "Name" or "Immd"
+                }
+        }
+        else
+        {
+                goto end;
+        }        
+end:
+        if (status == CELL_1 || status == CELL_2)
+        {
+                wprintf(ERR_EXPECT_SYMBLE("Name or Immd"));
+        }
+        else if (status == END)
+        {
+                matched = 1;
+                int len = wcslen(buffer);
+                buffer[len - 1] = S_CELL; /* Just change type */
+                swprintf(out, MAX_BUF_SIZE, L"%ls", buffer);
+        }
+        return matched;
+}
+
 ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
 {
         ErrCode code = CODE_SUCCESS;
@@ -633,6 +670,10 @@ ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
                         matched = 1;
                 }
                 else if (sym_Immd(in, wc, out))
+                {
+                        matched = 1;
+                }
+                else if (sym_Cell(in, wc, out))
                 {
                         matched = 1;
                 }
@@ -668,7 +709,7 @@ ErrCode dgyDoLexer(FILE *in, wchar_t *out, const int maxMatchedCnt)
         }
         else if (feof(in))
         {
-                if (matchedCnt < maxMatchedCnt)
+                if (maxMatchedCnt != -1 && matchedCnt < maxMatchedCnt)
                 {
                         wprintf(L"dgyDoLexer: Cannot get enough matched results\n");
                         code = CODE_FAILURE;

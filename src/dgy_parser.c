@@ -82,7 +82,7 @@ static inline int isStr(cell_t *s, int top)
 static inline int isValue(cell_t *s, int top)
 {
         if (top >= 0)
-        {                
+        {
                 SymbleType type = s[top];
                 return type == S_NAME || type == S_IMMD || type == S_CHAR;
         }
@@ -95,17 +95,17 @@ static inline int isValue(cell_t *s, int top)
 static inline int isRelationalOp(cell_t *s, int top)
 {
         if (top >= 1 && s[top] == S_OP)
-        {                        
+        {
                 OpSymType type = s[top - 1];
                 return type == S_BEQ ||
-                        type == S_AEQ ||
-                        type == S_NEQ ||
-                        type == S_BELOW ||
-                        type == S_ABOVE ||
-                        type == S_EQ ||
-                        type == S_AND ||
-                        type == S_OR ||
-                        type == S_NOT;
+                       type == S_AEQ ||
+                       type == S_NEQ ||
+                       type == S_BELOW ||
+                       type == S_ABOVE ||
+                       type == S_EQ ||
+                       type == S_AND ||
+                       type == S_OR ||
+                       type == S_NOT;
         }
         else
         {
@@ -116,16 +116,16 @@ static inline int isRelationalOp(cell_t *s, int top)
 static inline int isLogicalOp(cell_t *s, int top)
 {
         if (top >= 1 && s[top] == S_OP)
-        {                        
+        {
                 OpSymType type = s[top - 1];
                 return type == S_AND ||
-                        type == S_OR ||
-                        type == S_NOT;
+                       type == S_OR ||
+                       type == S_NOT;
         }
         else
         {
                 return 0;
-        }        
+        }
 }
 
 static int match_SimpObj(DgyStack *analysisStack)
@@ -139,13 +139,13 @@ static int match_SimpObj(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* <Name> */
+        case 0: /* <Name> */
                 if (isName(s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* "=" */
+        case 1: /* "=" */
                 if (isOp(S_EQ, s, top))
                 {
                         matched = 2;
@@ -157,7 +157,7 @@ static int match_SimpObj(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        case 2:                 /* <Cell> */
+        case 2: /* <Cell> */
                 if (isCell(s, top))
                 {
                         matched = MATCH_COMPLETED;
@@ -171,7 +171,7 @@ static int match_SimpObj(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        case 3:                 /* <Value> <Cell> */
+        case 3:                     /* <Value> <Cell> */
                 if (isCell(s, top)) // <Cell>
                 {
                         matched = MATCH_COMPLETED;
@@ -199,13 +199,13 @@ static int match_ObjBegin(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* <Name> */
+        case 0: /* <Name> */
                 if (isName(s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* "=" */
+        case 1: /* "=" */
                 if (isOp(S_EQ, s, top))
                 {
                         matched = MATCH_COMPLETED;
@@ -232,13 +232,13 @@ static int match_ObjEnd(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "=" */
+        case 0: /* "=" */
                 if (isOp(S_EQ, s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* <Name> */
+        case 1: /* <Name> */
                 if (isName(s, top))
                 {
                         matched = MATCH_COMPLETED;
@@ -263,15 +263,15 @@ static int match_Mov(DgyStack *analysisStack)
         {
                 matched = 0;
         }
-        switch (matched)                
+        switch (matched)
         {
-        case 0:                 /* "存" */
+        case 0: /* "存" */
                 if (isReserved(S_CUN, s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* <Value> | <Cell> */
+        case 1: /* <Value> | <Cell> */
                 if (isValue(s, top) || isCell(s, top))
                 {
                         matched = 2;
@@ -283,7 +283,7 @@ static int match_Mov(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        case 2:                 /* "到" */
+        case 2: /* "到" */
                 if (isReserved(S_DAO, s, top))
                 {
                         matched = 3;
@@ -295,7 +295,7 @@ static int match_Mov(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        case 3:                 /* <Cell> | <Name> */
+        case 3: /* <Cell> | <Name> */
                 if (isCell(s, top) || isName(s, top))
                 {
                         matched = MATCH_COMPLETED;
@@ -320,15 +320,15 @@ static int match_SetReg(DgyStack *analysisStack)
         {
                 matched = 0;
         }
-        switch (matched)                
+        switch (matched)
         {
-        case 0:                 /* "设" */
+        case 0: /* "设" */
                 if (isReserved(S_SHE, s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* <Name> */
+        case 1: /* <Name> */
                 if (isName(s, top))
                 {
                         matched = 2;
@@ -340,7 +340,7 @@ static int match_SetReg(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        case 2:                 /* "=" */
+        case 2: /* "=" */
                 if (isOp(S_EQ, s, top))
                 {
                         matched = 3;
@@ -352,8 +352,8 @@ static int match_SetReg(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        case 3:                 /* <Cell> | <Value> */
-                if (isCell(s, top) || isValue(s, top)) 
+        case 3: /* <Cell> | <Value> */
+                if (isCell(s, top) || isValue(s, top))
                 {
                         matched = MATCH_COMPLETED;
                 }
@@ -364,7 +364,7 @@ static int match_SetReg(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        }        
+        }
         return matched;
 }
 
@@ -379,14 +379,14 @@ static int match_Exec(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "令" | "求" */
+        case 0: /* "令" | "求" */
                 if (isReserved(S_LING, s, top) ||
                     isReserved(S_QIU, s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* {<Value> | <Str>} "结果存" */
+        case 1: /* {<Value> | <Str>} "结果存" */
                 if (isValue(s, top) || isStr(s, top))
                 {
                         matched = 1;
@@ -401,7 +401,7 @@ static int match_Exec(DgyStack *analysisStack)
                         wprintf(ERR_EXPECT_SYMBLE("结果存"));
                         matched = 0;
                 }
-        case 2:                 /* <Cell> | <Name> */
+        case 2: /* <Cell> | <Name> */
                 if (isCell(s, top) || isName(s, top))
                 {
                         matched = MATCH_COMPLETED;
@@ -413,7 +413,7 @@ static int match_Exec(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        }        
+        }
         return matched;
 }
 
@@ -428,13 +428,13 @@ static int match_If(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "如果" */
+        case 0: /* "如果" */
                 if (isReserved(S_RU_GUO, s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* <Value> | <Cell> */
+        case 1: /* <Value> | <Cell> */
                 if (isValue(s, top) || isCell(s, top))
                 {
                         matched = 2;
@@ -446,7 +446,7 @@ static int match_If(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        case 2:                 /* <Relational Op> | <Logical Op> | "就"*/
+        case 2: /* <Relational Op> | <Logical Op> | "就"*/
                 if (isRelationalOp(s, top) || isLogicalOp(s, top))
                 {
                         matched = 1;
@@ -477,7 +477,7 @@ static int match_Else(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "否则" */
+        case 0: /* "否则" */
                 if (isReserved(S_FOU_ZE, s, top))
                 {
                         matched = MATCH_COMPLETED;
@@ -498,14 +498,14 @@ static int match_ElseEnd(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "否则结束" */
+        case 0: /* "否则结束" */
                 if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
                 {
                         matched = MATCH_COMPLETED;
                 }
-                break;                
+                break;
         }
-        return matched;        
+        return matched;
 }
 
 static int match_Hereis(DgyStack *analysisStack)
@@ -519,13 +519,13 @@ static int match_Hereis(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "这里是" */
+        case 0: /* "这里是" */
                 if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* <名称> */
+        case 1: /* <名称> */
                 if (isName(s, top))
                 {
                         matched = MATCH_COMPLETED;
@@ -538,7 +538,7 @@ static int match_Hereis(DgyStack *analysisStack)
                 }
                 break;
         }
-        return matched;        
+        return matched;
 }
 
 static int match_Goto(DgyStack *analysisStack)
@@ -552,13 +552,13 @@ static int match_Goto(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "去" */
+        case 0: /* "去" */
                 if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* <名称> */
+        case 1: /* <名称> */
                 if (isName(s, top))
                 {
                         matched = MATCH_COMPLETED;
@@ -569,9 +569,9 @@ static int match_Goto(DgyStack *analysisStack)
                         wprintf(ERR_EXPECT_SYMBLE("<Name>"));
                         matched = 0;
                 }
-                break;                
+                break;
         }
-        return matched;        
+        return matched;
 }
 
 static int match_LoopBegin(DgyStack *analysisStack)
@@ -585,14 +585,14 @@ static int match_LoopBegin(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "重复执行" */
+        case 0: /* "重复执行" */
                 if (isReserved(S_CHONG_FU_ZHI_XING, s, top))
                 {
                         matched = MATCH_COMPLETED;
                 }
-                break;          
+                break;
         }
-        return matched;        
+        return matched;
 }
 
 static int match_LoopCheck(DgyStack *analysisStack)
@@ -606,13 +606,13 @@ static int match_LoopCheck(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "检测" */
+        case 0: /* "检测" */
                 if (isReserved(S_JIAN_CE, s, top))
                 {
                         matched = 1;
                 }
                 break;
-        case 1:                 /* <Value> | <Cell> */
+        case 1: /* <Value> | <Cell> */
                 if (isValue(s, top) || isCell(s, top))
                 {
                         matched = 2;
@@ -624,7 +624,7 @@ static int match_LoopCheck(DgyStack *analysisStack)
                         matched = 0;
                 }
                 break;
-        case 2:                 /* <Relational Op> | <Logical Op> | "条件"*/
+        case 2: /* <Relational Op> | <Logical Op> | "条件"*/
                 if (isRelationalOp(s, top) || isLogicalOp(s, top))
                 {
                         matched = 1;
@@ -639,9 +639,9 @@ static int match_LoopCheck(DgyStack *analysisStack)
                         wprintf(ERR_EXPECT_SYMBLE("<Relational Op> or <Logical Op> or '条件'"));
                         matched = 0;
                 }
-                break;                
+                break;
         }
-        return matched;        
+        return matched;
 }
 
 static int match_LoopEnd(DgyStack *analysisStack)
@@ -655,7 +655,7 @@ static int match_LoopEnd(DgyStack *analysisStack)
         }
         switch (matched)
         {
-        case 0:                 /* "直到" | "无条件" */
+        case 0: /* "直到" | "无条件" */
                 if (isReserved(S_ZHI_DAO, s, top))
                 {
                         matched = 1;
@@ -665,7 +665,7 @@ static int match_LoopEnd(DgyStack *analysisStack)
                         matched = MATCH_COMPLETED;
                 }
                 break;
-        case 1:                 /* "成立" | "不成立" */
+        case 1: /* "成立" | "不成立" */
                 if (isReserved(S_CHENG_LI, s, top) ||
                     isReserved(S_BU_CHENG_LI, s, top))
                 {
@@ -679,11 +679,11 @@ static int match_LoopEnd(DgyStack *analysisStack)
                 }
                 break;
         }
-        return matched;        
+        return matched;
 }
 
 ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
-{       
+{
         DgyStack analysisStack;
         dgyStackInit(&analysisStack, 16); /* Create analysisStack */
         ErrCode code = CODE_SUCCESS;

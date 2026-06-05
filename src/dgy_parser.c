@@ -10,20 +10,19 @@ static inline int isValue(cell_t *s, int top);
 static inline int isRelationalOp(cell_t *s, int top);
 static inline int isLogicalOp(cell_t *s, int top);
 
-static int match_SimpObj(DgyStack *analysisStack);
-static int match_ObjBegin(DgyStack *analysisStack);
-static int match_ObjEnd(DgyStack *analysisStack);
-static int match_Mov(DgyStack *analysisStack);
-static int match_SetReg(DgyStack *analysisStack);
-static int match_Exec(DgyStack *analysisStack);
-static int match_If(DgyStack *analysisStack);
-static int match_Else(DgyStack *analysisStack);
-static int match_ElseEnd(DgyStack *analysisStack);
-static int match_Hereis(DgyStack *analysisStack);
-static int match_Goto(DgyStack *analysisStack);
-static int match_LoopBegin(DgyStack *analysisStack);
-static int match_LoopCheck(DgyStack *analysisStack);
-static int match_LoopEnd(DgyStack *analysisStack);
+static int match_ObjBegin(DgyStack *analysisStack, StatType *matchedType);
+static int match_ObjEnd(DgyStack *analysisStack, StatType *matchedType);
+static int match_Mov(DgyStack *analysisStack, StatType *matchedType);
+static int match_SetReg(DgyStack *analysisStack, StatType *matchedType);
+static int match_Exec(DgyStack *analysisStack, StatType *matchedType);
+static int match_If(DgyStack *analysisStack, StatType *matchedType);
+static int match_Else(DgyStack *analysisStack, StatType *matchedType);
+static int match_ElseEnd(DgyStack *analysisStack, StatType *matchedType);
+static int match_Hereis(DgyStack *analysisStack, StatType *matchedType);
+static int match_Goto(DgyStack *analysisStack, StatType *matchedType);
+static int match_LoopBegin(DgyStack *analysisStack, StatType *matchedType);
+static int match_LoopCheck(DgyStack *analysisStack, StatType *matchedType);
+static int match_LoopEnd(DgyStack *analysisStack, StatType *matchedType);
 
 static ErrCode getSymble(FILE *in, DgyStack *codeStack, DgyStack *analysisStack)
 {
@@ -82,7 +81,7 @@ static inline int isStr(cell_t *s, int top)
 static inline int isValue(cell_t *s, int top)
 {
         if (top >= 0)
-        {                
+        {
                 SymbleType type = s[top];
                 return type == S_NAME || type == S_IMMD || type == S_CHAR;
         }
@@ -95,17 +94,17 @@ static inline int isValue(cell_t *s, int top)
 static inline int isRelationalOp(cell_t *s, int top)
 {
         if (top >= 1 && s[top] == S_OP)
-        {                        
+        {
                 OpSymType type = s[top - 1];
                 return type == S_BEQ ||
-                        type == S_AEQ ||
-                        type == S_NEQ ||
-                        type == S_BELOW ||
-                        type == S_ABOVE ||
-                        type == S_EQ ||
-                        type == S_AND ||
-                        type == S_OR ||
-                        type == S_NOT;
+                       type == S_AEQ ||
+                       type == S_NEQ ||
+                       type == S_BELOW ||
+                       type == S_ABOVE ||
+                       type == S_EQ ||
+                       type == S_AND ||
+                       type == S_OR ||
+                       type == S_NOT;
         }
         else
         {
@@ -116,574 +115,559 @@ static inline int isRelationalOp(cell_t *s, int top)
 static inline int isLogicalOp(cell_t *s, int top)
 {
         if (top >= 1 && s[top] == S_OP)
-        {                        
+        {
                 OpSymType type = s[top - 1];
                 return type == S_AND ||
-                        type == S_OR ||
-                        type == S_NOT;
+                       type == S_OR ||
+                       type == S_NOT;
         }
         else
         {
                 return 0;
-        }        
+        }
 }
 
-static int match_SimpObj(DgyStack *analysisStack)
+static int match_ObjBegin(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* <Name> */
+        case 0: /* <Name> */
                 if (isName(s, top))
                 {
-                        matched = 1;
+                        status = 1;
+                        *matchedType = ST_OBJ_BEGIN;
                 }
                 break;
-        case 1:                 /* "=" */
+        case 1: /* "=" */
                 if (isOp(S_EQ, s, top))
                 {
-                        matched = 2;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect "="
                         wprintf(ERR_EXPECT_SYMBLE("="));
-                        matched = 0;
-                }
-                break;
-        case 2:                 /* <Cell> */
-                if (isCell(s, top))
-                {
-                        matched = MATCH_COMPLETED;
-                }
-                else if (isValue(s, top)) // <Value>
-                {
-                        matched = 3;
-                }
-                else
-                {
-                        matched = 0;
-                }
-                break;
-        case 3:                 /* <Value> <Cell> */
-                if (isCell(s, top)) // <Cell>
-                {
-                        matched = MATCH_COMPLETED;
-                }
-                else
-                {
-                        // Expect <Cell>
-                        wprintf(ERR_EXPECT_SYMBLE("<Cell>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
         }
-        return matched;
+        return status;
 }
 
-static int match_ObjBegin(DgyStack *analysisStack)
+static int match_ObjEnd(DgyStack *analysisStack, StatType *matchedType)
 {
-        /* match_ObjBegin should be after match_SimpObj */
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* <Name> */
-                if (isName(s, top))
-                {
-                        matched = 1;
-                }
-                break;
-        case 1:                 /* "=" */
+        case 0: /* "=" */
                 if (isOp(S_EQ, s, top))
                 {
-                        matched = MATCH_COMPLETED;
-                }
-                else
-                {
-                        // Expect "="
-                        wprintf(ERR_EXPECT_SYMBLE("="));
-                        matched = 0;
+                        status = 1;
+                        *matchedType = ST_OBJ_END;
                 }
                 break;
-        }
-        return matched;
-}
-
-static int match_ObjEnd(DgyStack *analysisStack)
-{
-        static int matched = 0;
-        int top = analysisStack->sp - 1;
-        cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
-        {
-                matched = 0;
-        }
-        switch (matched)
-        {
-        case 0:                 /* "=" */
-                if (isOp(S_EQ, s, top))
-                {
-                        matched = 1;
-                }
-                break;
-        case 1:                 /* <Name> */
+        case 1: /* <Name> */
                 if (isName(s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect <Name>
                         wprintf(ERR_EXPECT_SYMBLE("<Name>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
         }
-        return matched;
+        return status;
 }
 
-static int match_Mov(DgyStack *analysisStack)
+static int match_Mov(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)                
+        switch (status)
         {
-        case 0:                 /* "存" */
+        case 0: /* "存" */
                 if (isReserved(S_CUN, s, top))
                 {
-                        matched = 1;
+                        status = 1;
+                        *matchedType = ST_MOV;
                 }
                 break;
-        case 1:                 /* <Value> | <Cell> */
+        case 1: /* <Value> | <Cell> */
                 if (isValue(s, top) || isCell(s, top))
                 {
-                        matched = 2;
+                        status = 2;
                 }
                 else
                 {
                         // Expect <Value> or <Cell>
                         wprintf(ERR_EXPECT_SYMBLE("<Value> or <Cell>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 2:                 /* "到" */
+        case 2: /* "到" */
                 if (isReserved(S_DAO, s, top))
                 {
-                        matched = 3;
+                        status = 3;
                 }
                 else
                 {
                         // Expect "到"
                         wprintf(ERR_EXPECT_SYMBLE("到"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 3:                 /* <Cell> | <Name> */
+        case 3: /* <Cell> | <Name> */
                 if (isCell(s, top) || isName(s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect <Cell> or <Name>
                         wprintf(ERR_EXPECT_SYMBLE("<Cell> or <Name>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
         }
-        return matched;
+        return status;
 }
 
-static int match_SetReg(DgyStack *analysisStack)
+static int match_SetReg(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)                
+        switch (status)
         {
-        case 0:                 /* "设" */
+        case 0: /* "设" */
                 if (isReserved(S_SHE, s, top))
                 {
-                        matched = 1;
+                        status = 1;
+                        *matchedType = ST_SET_REG;
                 }
                 break;
-        case 1:                 /* <Name> */
+        case 1: /* <Name> */
                 if (isName(s, top))
                 {
-                        matched = 2;
+                        status = 2;
                 }
                 else
                 {
                         // Expect <Name>
                         wprintf(ERR_EXPECT_SYMBLE("<Name>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 2:                 /* "=" */
+        case 2: /* "=" */
                 if (isOp(S_EQ, s, top))
                 {
-                        matched = 3;
+                        status = 3;
                 }
                 else
                 {
                         // Expect "="
                         wprintf(ERR_EXPECT_SYMBLE("="));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 3:                 /* <Cell> | <Value> */
-                if (isCell(s, top) || isValue(s, top)) 
+        case 3: /* <Cell> | <Value> */
+                if (isCell(s, top) || isValue(s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect <Cell> or <Value>
                         wprintf(ERR_EXPECT_SYMBLE("<Cell> or <Value>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        }        
-        return matched;
+        }
+        return status;
 }
 
-static int match_Exec(DgyStack *analysisStack)
+static int match_Exec(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* "令" | "求" */
+        case 0: /* "令" | "求" */
                 if (isReserved(S_LING, s, top) ||
                     isReserved(S_QIU, s, top))
                 {
-                        matched = 1;
+                        status = 1;
+                        *matchedType = ST_EXEC;
                 }
                 break;
-        case 1:                 /* {<Value> | <Str>} "结果存" */
+        case 1: /* {<Value> | <Str>} "结果存" */
                 if (isValue(s, top) || isStr(s, top))
                 {
-                        matched = 1;
+                        status = 1;
                 }
                 else if (isReserved(S_JIE_GUO_CUN, s, top))
                 {
-                        matched = 2;
+                        status = 2;
                 }
                 else
                 {
                         // Expect "结果存"
                         wprintf(ERR_EXPECT_SYMBLE("结果存"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
-        case 2:                 /* <Cell> | <Name> */
+                break;
+        case 2: /* <Cell> | <Name> */
                 if (isCell(s, top) || isName(s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect <Cell> or <Name>
                         wprintf(ERR_EXPECT_SYMBLE("<Cell> or <Name>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        }        
-        return matched;
+        }
+        return status;
 }
 
-static int match_If(DgyStack *analysisStack)
+static int match_If(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* "如果" */
+        case 0: /* "如果" */
                 if (isReserved(S_RU_GUO, s, top))
                 {
-                        matched = 1;
+                        status = 1;
+                        *matchedType = ST_IF;
                 }
                 break;
-        case 1:                 /* <Value> | <Cell> */
+        case 1: /* <Value> | <Cell> */
                 if (isValue(s, top) || isCell(s, top))
                 {
-                        matched = 2;
+                        status = 2;
                 }
                 else
                 {
                         // Expect <Value> or <Cell>
                         wprintf(ERR_EXPECT_SYMBLE("<Value> or <Cell>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 2:                 /* <Relational Op> | <Logical Op> | "就"*/
+        case 2: /* <Relational Op> | <Logical Op> | "就"*/
                 if (isRelationalOp(s, top) || isLogicalOp(s, top))
                 {
-                        matched = 1;
+                        status = 1;
                 }
                 else if (isReserved(S_JIU, s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect <Relational Op> or <Logical Op> or "就"
                         wprintf(ERR_EXPECT_SYMBLE("<Relational Op> or <Logical Op> or '就'"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
         }
-        return matched;
+        return status;
 }
 
-static int match_Else(DgyStack *analysisStack)
+static int match_Else(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* "否则" */
+        case 0: /* "否则" */
                 if (isReserved(S_FOU_ZE, s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
+                        *matchedType = ST_ELSE;
                 }
                 break;
         }
-        return matched;
+        return status;
 }
 
-static int match_ElseEnd(DgyStack *analysisStack)
+static int match_ElseEnd(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* "否则结束" */
+        case 0: /* "否则结束" */
                 if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
                 {
-                        matched = MATCH_COMPLETED;
-                }
-                break;                
-        }
-        return matched;        
-}
-
-static int match_Hereis(DgyStack *analysisStack)
-{
-        static int matched = 0;
-        int top = analysisStack->sp - 1;
-        cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
-        {
-                matched = 0;
-        }
-        switch (matched)
-        {
-        case 0:                 /* "这里是" */
-                if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
-                {
-                        matched = 1;
+                        status = MATCH_COMPLETED;
+                        *matchedType = ST_ELSE_END;
                 }
                 break;
-        case 1:                 /* <名称> */
+        }
+        return status;
+}
+
+static int match_Hereis(DgyStack *analysisStack, StatType *matchedType)
+{
+        static int status = 0;
+        int top = analysisStack->sp - 1;
+        cell_t *s = analysisStack->stack;
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
+        {
+                status = 0;
+        }
+        switch (status)
+        {
+        case 0: /* "这里是" */
+                if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
+                {
+                        status = 1;
+                        *matchedType = ST_HEREIS;
+                }
+                break;
+        case 1: /* <名称> */
                 if (isName(s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect <Name>
                         wprintf(ERR_EXPECT_SYMBLE("<Name>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
         }
-        return matched;        
+        return status;
 }
 
-static int match_Goto(DgyStack *analysisStack)
+static int match_Goto(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* "去" */
+        case 0: /* "去" */
                 if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
                 {
-                        matched = 1;
+                        status = 1;
+                        *matchedType = ST_GOTO;
                 }
                 break;
-        case 1:                 /* <名称> */
+        case 1: /* <名称> */
                 if (isName(s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect <Name>
                         wprintf(ERR_EXPECT_SYMBLE("<Name>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
-                break;                
+                break;
         }
-        return matched;        
+        return status;
 }
 
-static int match_LoopBegin(DgyStack *analysisStack)
+static int match_LoopBegin(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* "重复执行" */
+        case 0: /* "重复执行" */
                 if (isReserved(S_CHONG_FU_ZHI_XING, s, top))
                 {
-                        matched = MATCH_COMPLETED;
-                }
-                break;          
-        }
-        return matched;        
-}
-
-static int match_LoopCheck(DgyStack *analysisStack)
-{
-        static int matched = 0;
-        int top = analysisStack->sp - 1;
-        cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
-        {
-                matched = 0;
-        }
-        switch (matched)
-        {
-        case 0:                 /* "检测" */
-                if (isReserved(S_JIAN_CE, s, top))
-                {
-                        matched = 1;
+                        status = MATCH_COMPLETED;
+                        *matchedType = ST_LOOP_BEGIN;
                 }
                 break;
-        case 1:                 /* <Value> | <Cell> */
+        }
+        return status;
+}
+
+static int match_LoopCheck(DgyStack *analysisStack, StatType *matchedType)
+{
+        static int status = 0;
+        int top = analysisStack->sp - 1;
+        cell_t *s = analysisStack->stack;
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
+        {
+                status = 0;
+        }
+        switch (status)
+        {
+        case 0: /* "检测" */
+                if (isReserved(S_JIAN_CE, s, top))
+                {
+                        status = 1;
+                        *matchedType = ST_LOOP_CHECK;
+                }
+                break;
+        case 1: /* <Value> | <Cell> */
                 if (isValue(s, top) || isCell(s, top))
                 {
-                        matched = 2;
+                        status = 2;
                 }
                 else
                 {
                         // Expect <Value> or <Cell>
                         wprintf(ERR_EXPECT_SYMBLE("<Value> or <Cell>"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 2:                 /* <Relational Op> | <Logical Op> | "条件"*/
+        case 2: /* <Relational Op> | <Logical Op> | "条件"*/
                 if (isRelationalOp(s, top) || isLogicalOp(s, top))
                 {
-                        matched = 1;
+                        status = 1;
                 }
                 else if (isReserved(S_TIAO_JIAN, s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect <Relational Op> or <Logical Op> or "条件"
                         wprintf(ERR_EXPECT_SYMBLE("<Relational Op> or <Logical Op> or '条件'"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
-                break;                
+                break;
         }
-        return matched;        
+        return status;
 }
 
-static int match_LoopEnd(DgyStack *analysisStack)
+static int match_LoopEnd(DgyStack *analysisStack, StatType *matchedType)
 {
-        static int matched = 0;
+        static int status = 0;
         int top = analysisStack->sp - 1;
         cell_t *s = analysisStack->stack;
-        if (MATCH_COMPLETED == matched)
+        if (MATCH_COMPLETED == status ||
+            STATTYPE_UNDEFINED == *matchedType)
         {
-                matched = 0;
+                status = 0;
         }
-        switch (matched)
+        switch (status)
         {
-        case 0:                 /* "直到" | "无条件" */
+        case 0: /* "直到" | "无条件" */
                 if (isReserved(S_ZHI_DAO, s, top))
                 {
-                        matched = 1;
+                        status = 1;
+                        *matchedType = ST_LOOP_END;
                 }
                 else if (isReserved(S_WU_TIAO_JIAN, s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
+                        *matchedType = ST_LOOP_END;
                 }
                 break;
-        case 1:                 /* "成立" | "不成立" */
+        case 1: /* "成立" | "不成立" */
                 if (isReserved(S_CHENG_LI, s, top) ||
                     isReserved(S_BU_CHENG_LI, s, top))
                 {
-                        matched = MATCH_COMPLETED;
+                        status = MATCH_COMPLETED;
                 }
                 else
                 {
                         // Expect "成立" or "不成立"
                         wprintf(ERR_EXPECT_SYMBLE("'成立' or '不成立'"));
-                        matched = 0;
+                        status = 0;
+                        *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
         }
-        return matched;        
+        return status;
 }
 
 ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
-{       
+{
         DgyStack analysisStack;
         dgyStackInit(&analysisStack, 16); /* Create analysisStack */
         ErrCode code = CODE_SUCCESS;
@@ -697,80 +681,158 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
         {
                 matchedCnt = -2;
         }
-        for (; (matchedCnt < maxMatchedCnt) && !feof(in);)
+        StatType matchedType = STATTYPE_UNDEFINED;
+        for (wint_t t; (matchedCnt < maxMatchedCnt) && (t = fgetwc(in)) != WEOF;)
         {
+                ungetwc(t, in); /* t is a temporary variable used to detect whether EOF has been reached. */
                 int matched = 0;
                 while (CODE_SUCCESS == getSymble(in, codeStack, &analysisStack))
                 {
-                        if (MATCH_COMPLETED == match_SimpObj(&analysisStack)) /* Simple Object Declaration */
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_OBJ_BEGIN)
                         {
-                                wprintf(L"归约SimpObj\n");
-                                matched = 1;
+                                /* Object Declaration Begin */
+                                if (MATCH_COMPLETED == match_ObjBegin(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约ObjBegin\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_ObjBegin(&analysisStack)) /* Object Declaration Begin */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_OBJ_END)
                         {
-                                wprintf(L"归约ObjBegin\n");
-                                matched = 1;
+                                /* Object Declaration End */
+                                if (MATCH_COMPLETED == match_ObjEnd(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约ObjEnd\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_ObjEnd(&analysisStack)) /* Object Declaration End */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_MOV)
                         {
-                                wprintf(L"归约ObjEnd\n");
-                                matched = 1;
+                                /* Move Value */
+                                if (MATCH_COMPLETED == match_Mov(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约Mov\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_Mov(&analysisStack)) /* Move Value */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_SET_REG)
                         {
-                                wprintf(L"归约Mov\n");
-                                matched = 1;
+                                /* Set Register */
+                                if (MATCH_COMPLETED == match_SetReg(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约SetReg\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_SetReg(&analysisStack)) /* Set Register */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_EXEC)
                         {
-                                wprintf(L"归约SetReg\n");
-                                matched = 1;
+                                /* Execute Object */
+                                if (MATCH_COMPLETED == match_Exec(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约Exec\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_Exec(&analysisStack)) /* Execute Object */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_IF)
                         {
-                                wprintf(L"归约Exec\n");
-                                matched = 1;
+                                /* Branch Begin */
+                                if (MATCH_COMPLETED == match_If(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约If\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_If(&analysisStack)) /* Branch Begin */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_ELSE)
                         {
-                                wprintf(L"归约If\n");
-                                matched = 1;
+                                /* Branch Else */
+                                if (MATCH_COMPLETED == match_Else(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约Else\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_Else(&analysisStack)) /* Branch Else */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_ELSE_END)
                         {
-                                wprintf(L"归约Else\n");
-                                matched = 1;
+                                /* Branch End */
+                                if (MATCH_COMPLETED == match_ElseEnd(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约ElseEnd\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_ElseEnd(&analysisStack)) /* Branch End */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_HEREIS)
                         {
-                                wprintf(L"归约ElseEnd\n");
-                                matched = 1;
+                                /* Set Label */
+                                if (MATCH_COMPLETED == match_Hereis(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约Hereis\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_Hereis(&analysisStack)) /* Set Label */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_GOTO)
                         {
-                                wprintf(L"归约Hereis\n");
-                                matched = 1;
+                                /* Goto Label */
+                                if (MATCH_COMPLETED == match_Goto(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约Goto\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_Goto(&analysisStack)) /* Goto Label */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_LOOP_BEGIN)
                         {
-                                wprintf(L"归约Goto\n");
-                                matched = 1;
+                                /* Loop Begin */
+                                if (MATCH_COMPLETED == match_LoopBegin(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约LoopBegin\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_LoopBegin(&analysisStack)) /* Loop Begin */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_LOOP_CHECK)
                         {
-                                wprintf(L"归约LoopBegin\n");
-                                matched = 1;
+                                /* Loop Check */
+                                if (MATCH_COMPLETED == match_LoopCheck(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约LoopCheck\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_LoopCheck(&analysisStack)) /* Loop Check */
+                        else if (matchedType == STATTYPE_UNDEFINED ||
+                                 matchedType == ST_LOOP_END)
                         {
-                                wprintf(L"归约LoopCheck\n");
-                                matched = 1;
+                                /* Loop End */
+                                if (MATCH_COMPLETED == match_LoopEnd(&analysisStack, &matchedType))
+                                {
+                                        wprintf(L"归约LoopEnd\n");
+                                        matched = 1;
+                                        matchedType = STATTYPE_UNDEFINED;
+                                }
                         }
-                        else if (MATCH_COMPLETED == match_LoopEnd(&analysisStack)) /* Loop End */
+                        else
                         {
-                                wprintf(L"归约LoopEnd\n");
-                                matched = 1;
                         }
                 }
                 // check matched

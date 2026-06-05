@@ -84,7 +84,7 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
         else if (wc != L'0' && iswdigit(wc))
         {
                 status = INT_2; // integer
-                buffer[bufIdx++] = wc;          
+                buffer[bufIdx++] = wc;
         }
         else if (wc == L'0')
         {
@@ -106,7 +106,7 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
                                 buffer[bufIdx++] = wc;
                         }
                         else
-                        {                                
+                        {
                                 ungetwc(wc, in);
                                 goto end; // Expect digits
                         }
@@ -361,11 +361,14 @@ end:
 
 static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
 {
-        enum { START = 1 };
+        enum
+        {
+                START = 1
+        };
         static size_t reservedgyaxLength = 0;
         if (reservedgyaxLength == 0)
         {
-                for (int i = START; i < RESERVED_SYM_CNT; ++i)
+                for (int i = START; i < RESERVED_SYM_END; ++i)
                 {
                         size_t len = wcslen(ReservedSymTable[i].symble);
                         if (len > reservedgyaxLength)
@@ -378,7 +381,7 @@ static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
         int idx = 0;
         ReservedSymType type = S_RESERVED_UNDEFINED; // Init with an invalid type
         int matched = 0;
-        for (int i = START; i < RESERVED_SYM_CNT; ++i)
+        for (int i = START; i < RESERVED_SYM_END; ++i)
         {
                 idx = 0;
                 if (isCharAt(wc, ReservedSymTable[i].symble, idx))
@@ -446,11 +449,14 @@ end:
 
 static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
 {
-        enum { START = 1 };
+        enum
+        {
+                START = 1
+        };
         static size_t opMaxLength = 0;
         if (opMaxLength == 0)
         {
-                for (int i = START; i < OP_SYM_CNT; ++i)
+                for (int i = START; i < OP_SYM_END; ++i)
                 {
                         size_t len = wcslen(OpSymTable[i].symble);
                         if (len > opMaxLength)
@@ -463,7 +469,7 @@ static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
         int idx = 0;
         OpSymType type = S_OP_UNDEFINED; // Init with an invalid type
         int matched = 0;
-        for (int i = START; i < OP_SYM_CNT; ++i)
+        for (int i = START; i < OP_SYM_END; ++i)
         {
                 idx = 0;
                 if (isCharAt(wc, OpSymTable[i].symble, idx))
@@ -597,7 +603,7 @@ static int sym_Cell(FILE *in, wint_t wc, wchar_t *out)
         enum
         {
                 MAX_BUF_SIZE = MAX_NAME_LEN + 2,
-        };                
+        };
         wchar_t buffer[MAX_BUF_SIZE];
         if (wc == L'#')
         {
@@ -625,7 +631,7 @@ static int sym_Cell(FILE *in, wint_t wc, wchar_t *out)
         else
         {
                 goto end;
-        }        
+        }
 end:
         if (status == CELL_1 || status == CELL_2)
         {
@@ -734,7 +740,7 @@ ErrCode fdgyDoLexer(const char *fname, wchar_t *out)
 
 ErrCode dgyDoLexerOnce(FILE *in, wchar_t *out)
 {
-        ErrCode code = CODE_FAILURE;        
+        ErrCode code = CODE_FAILURE;
         code = dgyDoLexer(in, out, 1);
         return code;
 }

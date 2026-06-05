@@ -6,7 +6,29 @@
 #include "dgy_stack.h"
 #include "dgy_dict.h"
 
-enum { MATCH_COMPLETED = -1 };
+enum
+{
+        MATCH_COMPLETED = -1
+};
+
+typedef enum
+{
+        STATTYPE_UNDEFINED,
+        ST_OBJ_BEGIN,
+        ST_OBJ_END,
+        ST_MOV,
+        ST_SET_REG,
+        ST_EXEC,
+        ST_IF,
+        ST_ELSE,
+        ST_ELSE_END,
+        ST_HEREIS,
+        ST_GOTO,
+        ST_LOOP_BEGIN,
+        ST_LOOP_CHECK,
+        ST_LOOP_END,
+        STATTYPE_END,
+} StatType;
 
 ErrCode fdgyDoParser(const char *fname, DgyStack *stack);
 ErrCode dgyDoParser(FILE *stream, DgyStack *stack, const int maxMatchedCnt);

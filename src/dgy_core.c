@@ -37,7 +37,7 @@ static ErrCode init()
         code = dgyStackInit(&codeStack, 16);
         if (code != CODE_SUCCESS)
                 return code;
-       
+
         /* Initialize name dictionary */
         code = nameDictInit();
         if (code != CODE_SUCCESS)

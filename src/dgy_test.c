@@ -62,19 +62,39 @@ static void test_lexer_op(FILE *out)
         test_lexer(fname, out);
 }
 
+static void test_lexer_cell(FILE *out)
+{
+        const char *fname = "dgy/test_lexer_cell.dgy";
+        test_lexer(fname, out);
+}
+
+static void test_parser(void)
+{
+        DgyStack codeStack;
+        dgyStackInit(&codeStack, 16);
+        fdgyDoParser("dgy/test_parser.dgy", &codeStack);
+}
+
 ErrCode dgyUnitTest(void)
 {
         // dgyTestDo();
-        enum { DONOT_TEST = 0 };
+        enum
+        {
+                DONOT_TEST = 0
+        };
         if (DONOT_TEST)
         {
                 test_lexer_immd(stdout);
                 test_lexer_str(stdout);
                 test_lexer_reserved(stdout);
-                test_lexer_op(stdout);        
+                test_lexer_op(stdout);
+
+                test_parser();
+
+                dgyTestDo();
         }
 
-        dgyTestDo();
-        
+        test_lexer_cell(stdout);
+
         return CODE_SUCCESS;
 }

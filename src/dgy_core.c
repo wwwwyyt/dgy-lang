@@ -1,20 +1,20 @@
 #include "dgy_core.h"
 
-static DgyStack dataStack;
-static DgyStack codeStack;
-static Dictionary nameDict;
+static DgyStack _dataStack;
+static DgyStack _codeStack;
+static Dictionary _nameDict;
 
 static ErrCode nameDictInit(void)
 {
-        ErrCode code = dgyDictInit(&nameDict, 16);
+        ErrCode code = dgyDictInit(&_nameDict, 16);
         if (code != CODE_SUCCESS)
                 return code;
 
-        code = dgyDictAdd(L"相加", 0, &nameDict);
+        code = dgyDictAdd(L"相加", 0, &_nameDict);
         if (code != CODE_SUCCESS)
                 return code;
 
-        code = dgyDictAdd(L"相减", 1, &nameDict);
+        code = dgyDictAdd(L"相减", 1, &_nameDict);
         if (code != CODE_SUCCESS)
                 return code;
 
@@ -29,12 +29,12 @@ static ErrCode init()
         setlocale(LC_ALL, "zh_CN.utf8");
 
         /* Initialize data stack */
-        code = dgyStackInit(&dataStack, 16);
+        code = dgyStackInit(&_dataStack, 16);
         if (code != CODE_SUCCESS)
                 return code;
 
         /* Initialize code stack */
-        code = dgyStackInit(&codeStack, 16);
+        code = dgyStackInit(&_codeStack, 16);
         if (code != CODE_SUCCESS)
                 return code;
 
@@ -48,17 +48,17 @@ static ErrCode init()
 
 static ErrCode pop()
 {
-        return dgyStackPop(&dataStack);
+        return dgyStackPop(&_dataStack);
 }
 
 static ErrCode push(cell_t data)
 {
-        return dgyStackPush(&dataStack, data);
+        return dgyStackPush(&_dataStack, data);
 }
 
 static cell_t top()
 {
-        return dgyStackTop(&dataStack);
+        return dgyStackTop(&_dataStack);
 }
 
 static void dgyMov(cell_t *src, cell_t *dst)
@@ -70,7 +70,7 @@ static void dgyLet(int bp,
                    int *sp,
                    void (*dgyEval)(cell_t *dstack, int bp, int *sp))
 {
-        dgyEval(dataStack.stack, bp, sp);
+        dgyEval(_dataStack.stack, bp, sp);
 }
 
 ErrCode dgyDo()
@@ -84,8 +84,8 @@ ErrCode dgyTestDo()
         ErrCode code = CODE_FAILURE;
         while (1)
         {
-                code = dgyDoParserOnce(stdin, &codeStack);
-                dgyPrintStack(codeStack.stack, 0, &(codeStack.sp));
+                code = dgyDoParserOnce(stdin, &_codeStack);
+                dgyPrintStack(_codeStack.stack, 0, &(_codeStack.sp));
         }
         return code;
 }

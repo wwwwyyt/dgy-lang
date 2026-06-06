@@ -24,6 +24,47 @@ static int match_LoopBegin(DgyStack *analysisStack, StatType *matchedType);
 static int match_LoopCheck(DgyStack *analysisStack, StatType *matchedType);
 static int match_LoopEnd(DgyStack *analysisStack, StatType *matchedType);
 
+static int matchStat(const StatType statType,
+                     int (*match)(DgyStack *analysisStack, StatType *matchedType),
+                     DgyStack *analysisStack, StatType *matchedType);
+
+static const StatType _statType[] = {
+    STATTYPE_UNDEFINED,
+    ST_OBJ_BEGIN,
+    ST_OBJ_END,
+    ST_MOV,
+    ST_SET_REG,
+    ST_EXEC,
+    ST_IF,
+    ST_ELSE,
+    ST_ELSE_END,
+    ST_HEREIS,
+    ST_GOTO,
+    ST_LOOP_BEGIN,
+    ST_LOOP_CHECK,
+    ST_LOOP_END,
+    STATTYPE_END,
+};
+
+static const int (*_matchStatFuncList[])(DgyStack *, StatType *) = {
+    /* Must be the same order of statType[] */
+    /* e.g. _matchStatFuncList[ST_OBJ_BEGIN] = match_ObjBegin */
+    NULL,
+    match_ObjBegin,  /* Object Declaration Begin */
+    match_ObjEnd,    /* Object Declaration End */
+    match_Mov,       /* Move Value */
+    match_SetReg,    /* Set Register */
+    match_Exec,      /* Execute Object */
+    match_If,        /* Branch Begin */
+    match_Else,      /* Branch Else */
+    match_ElseEnd,   /* Branch End */
+    match_Hereis,    /* Set Label */
+    match_Goto,      /* Goto Label */
+    match_LoopBegin, /* Loop Begin */
+    match_LoopCheck, /* Loop Check */
+    match_LoopEnd,   /* Loop End */
+};
+
 static ErrCode getSymble(FILE *in, DgyStack *codeStack, DgyStack *analysisStack)
 {
         enum
@@ -676,9 +717,9 @@ static int matchStat(const StatType statType,
                      DgyStack *analysisStack, StatType *matchedType)
 {
         int matched = 0;
-        if (MATCH_COMPLETED == match(&analysisStack, &matchedType))
+        if (MATCH_COMPLETED == match(analysisStack, matchedType))
         {
-                wprintf(L"归约ObjBegin\n");
+                wprintf(L"归约\n");
                 matched = 1;
                 matchedType = STATTYPE_UNDEFINED;
         }
@@ -707,212 +748,27 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                 int matched = 0;
                 while (CODE_SUCCESS == getSymble(in, codeStack, &analysisStack))
                 {
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_OBJ_BEGIN)
+                        if (matchedType == STATTYPE_UNDEFINED)
                         {
-                                /* Object Declaration Begin */
-                                if (MATCH_COMPLETED == match_ObjBegin(&analysisStack, &matchedType))
+                                /* The reason why i does not start from 0 is because _statType[0] = STATTYPE_UNDEFINED */
+                                for (int i = 1; _statType[i] != STATTYPE_END; ++i)
                                 {
-                                        wprintf(L"归约ObjBegin\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_OBJ_BEGIN)
-                                {
-                                        continue;
+                                        matchStat(_statType[i],
+                                                  _matchStatFuncList[i],
+                                                  &analysisStack, &matchedType);
+                                        if (matchedType != STATTYPE_UNDEFINED)
+                                        {
+                                                break;
+                                        }
                                 }
                         }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_OBJ_END)
+                        else
                         {
-                                /* Object Declaration End */
-                                if (MATCH_COMPLETED == match_ObjEnd(&analysisStack, &matchedType))
+                                if (matchStat(matchedType,
+                                              _matchStatFuncList[matchedType],
+                                              &analysisStack, &matchedType))
                                 {
-                                        wprintf(L"归约ObjEnd\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
                                         break;
-                                }
-                                if (matchedType == ST_OBJ_END)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_MOV)
-                        {
-                                /* Move Value */
-                                if (MATCH_COMPLETED == match_Mov(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约Mov\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_MOV)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_SET_REG)
-                        {
-                                /* Set Register */
-                                if (MATCH_COMPLETED == match_SetReg(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约SetReg\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_SET_REG)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_EXEC)
-                        {
-                                /* Execute Object */
-                                if (MATCH_COMPLETED == match_Exec(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约Exec\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_EXEC)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_IF)
-                        {
-                                /* Branch Begin */
-                                if (MATCH_COMPLETED == match_If(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约If\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_IF)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_ELSE)
-                        {
-                                /* Branch Else */
-                                if (MATCH_COMPLETED == match_Else(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约Else\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_ELSE)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_ELSE_END)
-                        {
-                                /* Branch End */
-                                if (MATCH_COMPLETED == match_ElseEnd(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约ElseEnd\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_ELSE_END)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_HEREIS)
-                        {
-                                /* Set Label */
-                                if (MATCH_COMPLETED == match_Hereis(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约Hereis\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_HEREIS)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_GOTO)
-                        {
-                                /* Goto Label */
-                                if (MATCH_COMPLETED == match_Goto(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约Goto\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_GOTO)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_LOOP_BEGIN)
-                        {
-                                /* Loop Begin */
-                                if (MATCH_COMPLETED == match_LoopBegin(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约LoopBegin\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_LOOP_BEGIN)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_LOOP_CHECK)
-                        {
-                                /* Loop Check */
-                                if (MATCH_COMPLETED == match_LoopCheck(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约LoopCheck\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_LOOP_CHECK)
-                                {
-                                        continue;
-                                }
-                        }
-                        if (matchedType == STATTYPE_UNDEFINED ||
-                            matchedType == ST_LOOP_END)
-                        {
-                                /* Loop End */
-                                if (MATCH_COMPLETED == match_LoopEnd(&analysisStack, &matchedType))
-                                {
-                                        wprintf(L"归约LoopEnd\n");
-                                        matched = 1;
-                                        matchedType = STATTYPE_UNDEFINED;
-                                        break;
-                                }
-                                if (matchedType == ST_LOOP_END)
-                                {
-                                        continue;
                                 }
                         }
                 }

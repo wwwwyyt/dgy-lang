@@ -206,7 +206,19 @@ DGY 是一门用于计算机教学的，以 Forth 为灵感的中文编程语言
 
 目录和文件命名使用小写字母 + 下划线。
 
+例：`src/dgy_lexer.h`
+
 局部变量名和函数名使用小驼峰。一些需要强调下划线后内容的函数可以使用下划线。
+
+例：`static int sym_Name(FILE *in, wint_t wc, wchar_t *out)` `int bufIdx = 0;`
+
+静态全局变量需要加一个下划线前缀。
+
+例：`static DgyStack _dataStack;`
+
+全局函数需要加上“dgy”前缀。
+
+例：`ErrCode dgyDo()`
 
 **错误处理**
 

@@ -25,7 +25,7 @@ typedef struct
 
 typedef enum
 {
-        // Must be the same order of ReservedSymTable.type
+        // Must be the same order of _reservedSymTable.type
         S_RESERVED_UNDEFINED = 0,
         S_CHONG_FU_ZHI_XING,
         S_FOU_ZE_JIE_SHU,
@@ -49,7 +49,7 @@ typedef enum
         RESERVED_SYM_END,
 } ReservedSymType;
 
-static const SymbleTable ReservedSymTable[] = {
+static const SymbleTable _reservedSymTable[] = {
     // Must be sorted in descending order of length
     {NULL, 0},
     {L"重复执行", S_CHONG_FU_ZHI_XING},
@@ -76,7 +76,7 @@ static const SymbleTable ReservedSymTable[] = {
 
 typedef enum
 {
-        // Must be the same order of OpSymTable.type
+        // Must be the same order of _opSymTable.type
         S_OP_UNDEFINED = 0,
         S_BEQ,
         S_AEQ,
@@ -94,7 +94,7 @@ typedef enum
         OP_SYM_END,
 } OpSymType;
 
-static const SymbleTable OpSymTable[] = {
+static const SymbleTable _opSymTable[] = {
     // Must be sorted in descending order of length
     {NULL, 0},
     {L"<=", S_BEQ},

@@ -377,7 +377,7 @@ static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
         {
                 for (int i = START; i < RESERVED_SYM_END; ++i)
                 {
-                        size_t len = wcslen(ReservedSymTable[i].symble);
+                        size_t len = wcslen(_reservedSymTable[i].symble);
                         if (len > reservedgyaxLength)
                                 reservedgyaxLength = len;
                 }
@@ -391,16 +391,16 @@ static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
         for (int i = START; i < RESERVED_SYM_END; ++i)
         {
                 idx = 0;
-                if (isCharAt(wc, ReservedSymTable[i].symble, idx))
+                if (isCharAt(wc, _reservedSymTable[i].symble, idx))
                 {
                         idx++;
-                        int length = wcslen(ReservedSymTable[i].symble);
+                        int length = wcslen(_reservedSymTable[i].symble);
                         while (idx < length)
                         {
                                 buffer[bufIdx++] = wc;
                                 if ((wc = fgetwc(in)) != WEOF)
                                 {
-                                        if (isCharAt(wc, ReservedSymTable[i].symble, idx))
+                                        if (isCharAt(wc, _reservedSymTable[i].symble, idx))
                                         {
                                                 idx++;
                                         }
@@ -465,7 +465,7 @@ static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
         {
                 for (int i = START; i < OP_SYM_END; ++i)
                 {
-                        size_t len = wcslen(OpSymTable[i].symble);
+                        size_t len = wcslen(_opSymTable[i].symble);
                         if (len > opMaxLength)
                                 opMaxLength = len;
                 }
@@ -479,16 +479,16 @@ static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
         for (int i = START; i < OP_SYM_END; ++i)
         {
                 idx = 0;
-                if (isCharAt(wc, OpSymTable[i].symble, idx))
+                if (isCharAt(wc, _opSymTable[i].symble, idx))
                 {
                         idx++;
-                        int length = wcslen(OpSymTable[i].symble);
+                        int length = wcslen(_opSymTable[i].symble);
                         while (idx < length)
                         {
                                 buffer[bufIdx++] = wc;
                                 if ((wc = fgetwc(in)) != WEOF)
                                 {
-                                        if (isCharAt(wc, OpSymTable[i].symble, idx))
+                                        if (isCharAt(wc, _opSymTable[i].symble, idx))
                                         {
                                                 idx++;
                                         }

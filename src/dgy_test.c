@@ -88,13 +88,11 @@ ErrCode dgyUnitTest(void)
                 test_lexer_str(stdout);
                 test_lexer_reserved(stdout);
                 test_lexer_op(stdout);
-
-                test_parser();
+                test_lexer_cell(stdout);
 
                 dgyTestDo();
         }
-
-        test_lexer_cell(stdout);
+        test_parser();
 
         return CODE_SUCCESS;
 }

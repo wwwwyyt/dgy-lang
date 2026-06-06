@@ -181,6 +181,13 @@ static int sym_Immd(FILE *in, wint_t wc, wchar_t *out)
                         break;
                 }
         }
+        if (wc == WEOF)
+        {
+                if (status == INT_2)
+                {
+                        status = INT_END;
+                }
+        }
 end:
         switch (status)
         {
@@ -548,7 +555,7 @@ static int sym_Name(FILE *in, wint_t wc, wchar_t *out)
         {
                 goto end;
         }
-        while ((wc = fgetwc(in)) != EOF)
+        while ((wc = fgetwc(in)) != WEOF)
         {
                 if (status == NAME_1)
                 {
@@ -571,9 +578,12 @@ static int sym_Name(FILE *in, wint_t wc, wchar_t *out)
                         }
                 }
         }
-        if (wc == EOF)
+        if (wc == WEOF)
         {
-                status = NAME_END;
+                if (status == NAME_1)
+                {
+                        status = NAME_END;
+                }
         }
 end:
         if (status == NAME_END)
@@ -608,7 +618,7 @@ static int sym_Cell(FILE *in, wint_t wc, wchar_t *out)
         if (wc == L'#')
         {
                 status = CELL_1;
-                if ((wc = fgetwc(in)) != EOF)
+                if ((wc = fgetwc(in)) != WEOF)
                 {
                         status = CELL_2;
                         if (sym_Immd(in, wc, buffer) || sym_Name(in, wc, buffer))

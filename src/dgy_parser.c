@@ -671,6 +671,20 @@ static int match_LoopEnd(DgyStack *analysisStack, StatType *matchedType)
         return status;
 }
 
+static int matchStat(const StatType statType,
+                     int (*match)(DgyStack *analysisStack, StatType *matchedType),
+                     DgyStack *analysisStack, StatType *matchedType)
+{
+        int matched = 0;
+        if (MATCH_COMPLETED == match(&analysisStack, &matchedType))
+        {
+                wprintf(L"归约ObjBegin\n");
+                matched = 1;
+                matchedType = STATTYPE_UNDEFINED;
+        }
+        return matched;
+}
+
 ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
 {
         DgyStack analysisStack;
@@ -702,10 +716,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约ObjBegin\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_OBJ_BEGIN)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_OBJ_END)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_OBJ_END)
                         {
                                 /* Object Declaration End */
                                 if (MATCH_COMPLETED == match_ObjEnd(&analysisStack, &matchedType))
@@ -713,10 +732,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约ObjEnd\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_OBJ_END)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_MOV)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_MOV)
                         {
                                 /* Move Value */
                                 if (MATCH_COMPLETED == match_Mov(&analysisStack, &matchedType))
@@ -724,10 +748,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约Mov\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_MOV)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_SET_REG)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_SET_REG)
                         {
                                 /* Set Register */
                                 if (MATCH_COMPLETED == match_SetReg(&analysisStack, &matchedType))
@@ -735,10 +764,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约SetReg\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_SET_REG)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_EXEC)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_EXEC)
                         {
                                 /* Execute Object */
                                 if (MATCH_COMPLETED == match_Exec(&analysisStack, &matchedType))
@@ -746,10 +780,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约Exec\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_EXEC)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_IF)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_IF)
                         {
                                 /* Branch Begin */
                                 if (MATCH_COMPLETED == match_If(&analysisStack, &matchedType))
@@ -757,10 +796,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约If\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_IF)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_ELSE)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_ELSE)
                         {
                                 /* Branch Else */
                                 if (MATCH_COMPLETED == match_Else(&analysisStack, &matchedType))
@@ -768,10 +812,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约Else\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_ELSE)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_ELSE_END)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_ELSE_END)
                         {
                                 /* Branch End */
                                 if (MATCH_COMPLETED == match_ElseEnd(&analysisStack, &matchedType))
@@ -779,10 +828,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约ElseEnd\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_ELSE_END)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_HEREIS)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_HEREIS)
                         {
                                 /* Set Label */
                                 if (MATCH_COMPLETED == match_Hereis(&analysisStack, &matchedType))
@@ -790,10 +844,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约Hereis\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_HEREIS)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_GOTO)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_GOTO)
                         {
                                 /* Goto Label */
                                 if (MATCH_COMPLETED == match_Goto(&analysisStack, &matchedType))
@@ -801,10 +860,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约Goto\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_GOTO)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_LOOP_BEGIN)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_LOOP_BEGIN)
                         {
                                 /* Loop Begin */
                                 if (MATCH_COMPLETED == match_LoopBegin(&analysisStack, &matchedType))
@@ -812,10 +876,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约LoopBegin\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_LOOP_BEGIN)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_LOOP_CHECK)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_LOOP_CHECK)
                         {
                                 /* Loop Check */
                                 if (MATCH_COMPLETED == match_LoopCheck(&analysisStack, &matchedType))
@@ -823,10 +892,15 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约LoopCheck\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
+                                }
+                                if (matchedType == ST_LOOP_CHECK)
+                                {
+                                        continue;
                                 }
                         }
-                        else if (matchedType == STATTYPE_UNDEFINED ||
-                                 matchedType == ST_LOOP_END)
+                        if (matchedType == STATTYPE_UNDEFINED ||
+                            matchedType == ST_LOOP_END)
                         {
                                 /* Loop End */
                                 if (MATCH_COMPLETED == match_LoopEnd(&analysisStack, &matchedType))
@@ -834,10 +908,12 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                                         wprintf(L"归约LoopEnd\n");
                                         matched = 1;
                                         matchedType = STATTYPE_UNDEFINED;
+                                        break;
                                 }
-                        }
-                        else
-                        {
+                                if (matchedType == ST_LOOP_END)
+                                {
+                                        continue;
+                                }
                         }
                 }
                 // check matched

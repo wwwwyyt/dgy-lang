@@ -1,5 +1,5 @@
 SRC = src/*.c
-TAR = DGY
+TAR = dgy
 CC = gcc
 CFLAGS = -g -Wall
 

@@ -40,31 +40,31 @@ static void test_lexer(const char *fname, FILE *out)
 
 static void test_lexer_immd(FILE *out)
 {
-        const char *fname = "dgy/test_lexer_immd.dgy";
+        const char *fname = "test/test_lexer_immd.dgy";
         test_lexer(fname, out);
 }
 
 static void test_lexer_str(FILE *out)
 {
-        const char *fname = "dgy/test_lexer_str.dgy";
+        const char *fname = "test/test_lexer_str.dgy";
         test_lexer(fname, out);
 }
 
 static void test_lexer_reserved(FILE *out)
 {
-        const char *fname = "dgy/test_lexer_reserved.dgy";
+        const char *fname = "test/test_lexer_reserved.dgy";
         test_lexer(fname, out);
 }
 
 static void test_lexer_op(FILE *out)
 {
-        const char *fname = "dgy/test_lexer_op.dgy";
+        const char *fname = "test/test_lexer_op.dgy";
         test_lexer(fname, out);
 }
 
 static void test_lexer_cell(FILE *out)
 {
-        const char *fname = "dgy/test_lexer_cell.dgy";
+        const char *fname = "test/test_lexer_cell.dgy";
         test_lexer(fname, out);
 }
 
@@ -72,7 +72,7 @@ static void test_parser(void)
 {
         DgyStack codeStack;
         dgyStackInit(&codeStack, 16);
-        fdgyDoParser("dgy/test_parser.dgy", &codeStack);
+        fdgyDoParser("test/test_parser.dgy", &codeStack);
 }
 
 ErrCode dgyUnitTest(void)

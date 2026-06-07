@@ -46,7 +46,7 @@ static const StatType _statType[] = {
     STATTYPE_END,
 };
 
-static const int (*_matchStatFuncList[])(DgyStack *, StatType *) = {
+static int (*_matchStatFuncList[])(DgyStack *, StatType *) = {
     /* Must be the same order of statType[] */
     /* e.g. _matchStatFuncList[ST_OBJ_BEGIN] = match_ObjBegin */
     NULL,
@@ -385,7 +385,7 @@ static int match_Exec(DgyStack *analysisStack, StatType *matchedType)
                         *matchedType = ST_EXEC;
                 }
                 break;
-        case 1: /* {<Value> | <Str>} "结果存" */
+        case 1: /* {<Value> | <Str>} ("结果存" | "无结果") */
                 if (isValue(s, top) || isStr(s, top))
                 {
                         status = 1;
@@ -394,10 +394,14 @@ static int match_Exec(DgyStack *analysisStack, StatType *matchedType)
                 {
                         status = 2;
                 }
+                else if (isReserved(S_WU_JIE_GUO, s, top))
+                {
+                        status = MATCH_COMPLETED;
+                }
                 else
                 {
-                        // Expect "结果存"
-                        wprintf(ERR_EXPECT_SYMBLE("结果存"));
+                        // Expect "结果存" or "无结果"
+                        wprintf(ERR_EXPECT_SYMBLE("'结果存' or '无结果'"));
                         status = 0;
                         *matchedType = STATTYPE_UNDEFINED;
                 }
@@ -514,7 +518,6 @@ static int match_ElseEnd(DgyStack *analysisStack, StatType *matchedType)
                         *matchedType = ST_ELSE_END;
                 }
                 break;
-                break;
         }
         return status;
 }
@@ -532,7 +535,7 @@ static int match_Hereis(DgyStack *analysisStack, StatType *matchedType)
         switch (status)
         {
         case 0: /* "这里是" */
-                if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
+                if (isReserved(S_ZHE_LI_SHI, s, top))
                 {
                         status = 1;
                         *matchedType = ST_HEREIS;
@@ -568,7 +571,7 @@ static int match_Goto(DgyStack *analysisStack, StatType *matchedType)
         switch (status)
         {
         case 0: /* "去" */
-                if (isReserved(S_FOU_ZE_JIE_SHU, s, top))
+                if (isReserved(S_QU, s, top))
                 {
                         status = 1;
                         *matchedType = ST_GOTO;
@@ -721,7 +724,7 @@ static int matchStat(const StatType statType,
         {
                 wprintf(L"归约\n");
                 matched = 1;
-                matchedType = STATTYPE_UNDEFINED;
+                *matchedType = STATTYPE_UNDEFINED;
         }
         return matched;
 }
@@ -750,7 +753,7 @@ ErrCode dgyDoParser(FILE *in, DgyStack *codeStack, const int maxMatchedCnt)
                 {
                         if (matchedType == STATTYPE_UNDEFINED)
                         {
-                                /* The reason why i does not start from 0 is because _statType[0] = STATTYPE_UNDEFINED */
+                                /* The reason why 'i' does not start from 0 is because _statType[0] = STATTYPE_UNDEFINED */
                                 for (int i = 1; _statType[i] != STATTYPE_END; ++i)
                                 {
                                         matchStat(_statType[i],

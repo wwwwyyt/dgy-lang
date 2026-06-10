@@ -11,6 +11,7 @@ static int sym_Comment(FILE *in, wint_t wc, wchar_t *out);
 static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out);
 static int sym_Op(FILE *in, wint_t wc, wchar_t *out);
 static int sym_Name(FILE *in, wint_t wc, wchar_t *out);
+static int sym_Cell(FILE *in, wint_t wc, wchar_t *out);
 
 static int isCharAt(wchar_t wc, const wchar_t *wcs, int idx)
 {
@@ -545,10 +546,18 @@ static int sym_Name(FILE *in, wint_t wc, wchar_t *out)
         wchar_t buffer[MAX_BUF_SIZE];
         int bufIdx = 0;
         int matched = 0;
+        int isExtern = 0; // Flag of Extern Name
         int outOfBuf = 0;
-        if (!iswdigit(wc) && isValidNameChar(wc))
+        if ((!iswdigit(wc) && isValidNameChar(wc)) || wc == L'@')
         {
-                buffer[bufIdx++] = wc;
+                if (wc == L'@')
+                {
+                        isExtern = 1;
+                }
+                else
+                {
+                        buffer[bufIdx++] = wc;
+                }
                 status = NAME_1;
         }
         else
@@ -590,7 +599,8 @@ end:
         {
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, S_NAME, L'\0');
+                SymbleType type = isExtern ? S_EXTERN_NAME : S_NAME;
+                swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, type, L'\0');
                 if (outOfBuf > 0)
                 {
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
@@ -609,14 +619,19 @@ static int sym_Cell(FILE *in, wint_t wc, wchar_t *out)
                 END,
         };
         int matched = 0;
+        int isReg = 0; // Flag of Register
         int status = START;
         enum
         {
                 MAX_BUF_SIZE = MAX_NAME_LEN + 2,
         };
         wchar_t buffer[MAX_BUF_SIZE];
-        if (wc == L'#')
+        if (wc == L'#' || wc == L'%')
         {
+                if (wc == L'%')
+                {
+                        isReg = 1;
+                }
                 status = CELL_1;
                 if ((wc = fgetwc(in)) != WEOF)
                 {
@@ -651,7 +666,7 @@ end:
         {
                 matched = 1;
                 int len = wcslen(buffer);
-                buffer[len - 1] = S_CELL; /* Just change type */
+                buffer[len - 1] = isReg ? S_REG : S_CELL; /* Just change type */
                 swprintf(out, MAX_BUF_SIZE, L"%ls", buffer);
         }
         return matched;

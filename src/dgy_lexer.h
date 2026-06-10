@@ -14,7 +14,9 @@ typedef enum
         S_RESERVED,
         S_OP,
         S_NAME,
+        S_EXTERN_NAME,
         S_CELL,
+        S_REG,
 } SymbleType;
 
 typedef struct
@@ -47,6 +49,7 @@ typedef enum
         S_QU,
         S_JIU,
         S_SHE,
+        S_CI,
         RESERVED_SYM_END,
 } ReservedSymType;
 
@@ -73,6 +76,7 @@ static const SymbleTable _reservedSymTable[] = {
     {L"去", S_QU},
     {L"就", S_JIU},
     {L"设", S_SHE},
+    {L"次", S_CI},
     {NULL, RESERVED_SYM_END},
 };
 
@@ -90,7 +94,7 @@ typedef enum
         S_OR,
         S_NOT,
         S_SLASH,
-        S_AT,
+        S_BACKSLASH,
         S_TILDE,
 
         OP_SYM_END,
@@ -109,7 +113,7 @@ static const SymbleTable _opSymTable[] = {
     {L"或", S_OR},
     {L"非", S_NOT},
     {L"/", S_SLASH},
-    {L"@", S_AT},
+    {L"\\", S_BACKSLASH},
     {L"~", S_TILDE},
     {NULL, OP_SYM_END},
 };

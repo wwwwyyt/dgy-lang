@@ -17,6 +17,7 @@ ErrCode dgyStackPop(DgyStack *s);
 ErrCode dgyStackPush(DgyStack *s, cell_t data);
 cell_t dgyStackTop(const DgyStack *s);
 int dgyStackEmpty(const DgyStack *s);
-void dgyStackDestroy(DgyStack *s);
+ErrCode dgyStackDestroy(DgyStack *s);
+ErrCode dgyStackDump(DgyStack *s, int start, int end);
 
 #endif /* _dgy_stack_h */

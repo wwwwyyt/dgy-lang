@@ -2,6 +2,11 @@
 
 static ErrCode resize(size_t newSize, Dictionary *dict)
 {
+        if (!dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgy_dict: resize");
+                return CODE_FAILURE;
+        }
         DictItem *newDict = (DictItem *)realloc(dict->dict, newSize * sizeof(DictItem)); // Allocate Dictionary.dict
         if (newDict == NULL)
         {
@@ -15,6 +20,11 @@ static ErrCode resize(size_t newSize, Dictionary *dict)
 
 ErrCode dgyDictInit(Dictionary *dict, size_t size)
 {
+        if (!dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyDictInit");
+                return CODE_FAILURE;
+        }        
         memset(dict, 0, sizeof(Dictionary));
         dict->size = size;
         dict->top = 0;
@@ -29,6 +39,11 @@ ErrCode dgyDictInit(Dictionary *dict, size_t size)
 
 ErrCode dgyDictAdd(const wchar_t *name, int entry, Dictionary *dict)
 {
+        if (!name || !dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyDictAdd");
+                return CODE_FAILURE;
+        }
         size_t nameLen = wcslen(name);
         DictItem newItem;
         newItem.name = (wchar_t *)malloc(nameLen * sizeof(wchar_t)); // Allocate DictItem.name
@@ -44,10 +59,16 @@ ErrCode dgyDictAdd(const wchar_t *name, int entry, Dictionary *dict)
 
 int dgyDictSearch(const wchar_t *name, Dictionary *dict)
 {
+        if (!name || !dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyDictSearch");
+                return -1;
+        }
         int entry = -1;
+        /* Start the search with the dictionary's latest entry */
         for (int i = dict->top - 1; i >= 0; --i)
         {
-                if (dict->dict[i].name == name)
+                if (wcscmp(dict->dict[i].name, name) == 0)
                 {
                         entry = dict->dict[i].entry;
                         break;
@@ -58,6 +79,11 @@ int dgyDictSearch(const wchar_t *name, Dictionary *dict)
 
 ErrCode dgyDictForget(const wchar_t *name, Dictionary *dict)
 {
+        if (!name || !dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyDictForget");
+                return CODE_FAILURE;
+        }        
         int entry = dgyDictSearch(name, dict);
         if (entry == -1)
         {
@@ -77,8 +103,13 @@ ErrCode dgyDictForget(const wchar_t *name, Dictionary *dict)
         return CODE_SUCCESS;
 }
 
-void dgyDictDestroy(Dictionary *dict)
+ErrCode dgyDictDestroy(Dictionary *dict)
 {
+        if (!dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyDictDestroy");
+                return CODE_FAILURE;
+        }                
         for (int i = 0; i < dict->top; ++i)
         {
                 free(dict->dict[i].name); // Free DictItem.name
@@ -86,4 +117,21 @@ void dgyDictDestroy(Dictionary *dict)
         }
         free(dict->dict); // Free Dictionary.dict
         memset(dict, 0, sizeof(Dictionary));
+        return CODE_SUCCESS;
+}
+
+
+ErrCode dgyDictDump(Dictionary *dict)
+{
+        if (!dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyDictDump");
+                return CODE_FAILURE;
+        }
+        for (int i = 0; i < dict->top; ++i)
+        {
+                DictItem item = dict->dict[i];
+                wprintf(L"%ls : %d\n", item.name, item.entry);
+        }
+        return CODE_SUCCESS;
 }

@@ -5,6 +5,7 @@
 #include "dgy_lexer.h"
 #include "dgy_stack.h"
 #include "dgy_dict.h"
+#include "dgy_analyser.h"
 
 enum
 {
@@ -30,8 +31,10 @@ typedef enum
         STATTYPE_END,
 } StatType;
 
-ErrCode fdgyDoParser(const char *fname, DgyStack *stack);
-ErrCode dgyDoParser(FILE *stream, DgyStack *stack, const int maxMatchedCnt);
-ErrCode dgyDoParserOnce(FILE *stream, DgyStack *stack);
+ErrCode fdgyDoParser(const char *fname, DgyStack *codestack);
+ErrCode dgyDoParser(FILE *stream, DgyStack *codestack, const int maxMatchedCnt);
+ErrCode dgyDoParserOnce(FILE *stream, DgyStack *codestack);
+
+void dgyParserSetDict(Dictionary *dict);
 
 #endif /* _dgy_parser_h */

@@ -2,7 +2,6 @@
 #define _dgy_dict_h
 
 #include "dgy_all.h"
-#include "dgy_object.h"
 #include "dgy_error.h"
 
 typedef struct
@@ -22,6 +21,7 @@ ErrCode dgyDictInit(Dictionary *dict, size_t size);
 ErrCode dgyDictAdd(const wchar_t *name, int entry, Dictionary *dict);
 int dgyDictSearch(const wchar_t *name, Dictionary *dict);
 ErrCode dgyDictForget(const wchar_t *name, Dictionary *dict);
-void dgyDictDestroy(Dictionary *dict);
+ErrCode dgyDictDestroy(Dictionary *dict);
+ErrCode dgyDictDump(Dictionary *dict);
 
 #endif /* _dgy_dict_h */

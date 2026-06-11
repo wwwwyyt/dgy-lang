@@ -294,3 +294,17 @@ if (s->sp == 0)
         return CODE_FAILURE;
 }
 ```
+
+数组越界：
+
+```
+if (i >= 0 && i < s->size)
+{
+        wprintf(L"%llX ", s->stack[i]);
+}
+else
+{
+        dgySetErr(ERR_OUT_OF_BOUNDS, L"dgyStackDump");
+        return CODE_FAILURE;
+}
+```

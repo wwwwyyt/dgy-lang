@@ -205,11 +205,11 @@ end:
         switch (status)
         {
         case INT_1:
-                wprintf(ERR_EXPECT_SYMBLE("digits"));
+                wprintf(ERR_EXPECT_SYMBOL("digits"));
                 dgyPrintErrPos(buffer, bufIdx, _fname, 0, 0);
                 break;
         case HEX_2:
-                wprintf(ERR_EXPECT_SYMBLE("xdigits"));
+                wprintf(ERR_EXPECT_SYMBOL("xdigits"));
                 dgyPrintErrPos(buffer, bufIdx, _fname, 0, 0);
                 break;
         case INT_END:
@@ -284,17 +284,17 @@ end:
         switch (status)
         {
         case STR_1:
-                wprintf(ERR_UNCLOSED_SYMBLE("*"));
+                wprintf(ERR_UNCLOSED_SYMBOL("*"));
                 dgyPrintErrPos(buffer, bufIdx, _fname, 0, 0);
                 break;
         case STR_2:
-                wprintf(ERR_INVALID_SYMBLE("\\n"));
+                wprintf(ERR_INVALID_SYMBOL("\\n"));
                 dgyPrintErrPos(buffer, bufIdx, _fname, 0, 0);
                 break;
         case STR_END:
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                SymbleType type = (bufIdx == 1) ? S_CHAR : S_STR;
+                SymbolType type = (bufIdx == 1) ? S_CHAR : S_STR;
                 swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, type, L'\0');
                 if (outOfBuf > 0)
                 {
@@ -369,16 +369,16 @@ end:
         switch (status)
         {
         case CMT_2:
-                wprintf(ERR_UNCLOSED_SYMBLE("/*"));
+                wprintf(ERR_UNCLOSED_SYMBOL("/*"));
                 dgyPrintErrPos(NULL, 0, _fname, 0, 0);
                 break;
         case CMT_3:
-                wprintf(ERR_UNCLOSED_SYMBLE("/"));
+                wprintf(ERR_UNCLOSED_SYMBOL("/"));
                 dgyPrintErrPos(NULL, 0, _fname, 0, 0);
                 break;
         case CMT_END:
                 matched = 1;
-                SymbleType type = S_COMMENT;
+                SymbolType type = S_COMMENT;
                 swprintf(out, 2, L"%lc%lc", type, L'\0');
                 break;
         default:
@@ -398,7 +398,7 @@ static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
         {
                 for (int i = START; i < RESERVED_SYM_END; ++i)
                 {
-                        size_t len = wcslen(_reservedSymTable[i].symble);
+                        size_t len = wcslen(_reservedSymTable[i].symbol);
                         if (len > reservedgyaxLength)
                                 reservedgyaxLength = len;
                 }
@@ -412,16 +412,16 @@ static int sym_Reserved(FILE *in, wint_t wc, wchar_t *out)
         for (int i = START; i < RESERVED_SYM_END; ++i)
         {
                 idx = 0;
-                if (isCharAt(wc, _reservedSymTable[i].symble, idx))
+                if (isCharAt(wc, _reservedSymTable[i].symbol, idx))
                 {
                         idx++;
-                        int length = wcslen(_reservedSymTable[i].symble);
+                        int length = wcslen(_reservedSymTable[i].symbol);
                         while (idx < length)
                         {
                                 buffer[bufIdx++] = wc;
                                 if (getWideChar(&wc, in) != WEOF)
                                 {
-                                        if (isCharAt(wc, _reservedSymTable[i].symble, idx))
+                                        if (isCharAt(wc, _reservedSymTable[i].symbol, idx))
                                         {
                                                 idx++;
                                         }
@@ -486,7 +486,7 @@ static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
         {
                 for (int i = START; i < OP_SYM_END; ++i)
                 {
-                        size_t len = wcslen(_opSymTable[i].symble);
+                        size_t len = wcslen(_opSymTable[i].symbol);
                         if (len > opMaxLength)
                                 opMaxLength = len;
                 }
@@ -500,16 +500,16 @@ static int sym_Op(FILE *in, wint_t wc, wchar_t *out)
         for (int i = START; i < OP_SYM_END; ++i)
         {
                 idx = 0;
-                if (isCharAt(wc, _opSymTable[i].symble, idx))
+                if (isCharAt(wc, _opSymTable[i].symbol, idx))
                 {
                         idx++;
-                        int length = wcslen(_opSymTable[i].symble);
+                        int length = wcslen(_opSymTable[i].symbol);
                         while (idx < length)
                         {
                                 buffer[bufIdx++] = wc;
                                 if (getWideChar(&wc, in) != WEOF)
                                 {
-                                        if (isCharAt(wc, _opSymTable[i].symble, idx))
+                                        if (isCharAt(wc, _opSymTable[i].symbol, idx))
                                         {
                                                 idx++;
                                         }
@@ -619,7 +619,7 @@ end:
         {
                 matched = 1;
                 buffer[bufIdx] = L'\0';
-                SymbleType type = isExtern ? S_EXTERN_WORD : S_WORD;
+                SymbolType type = isExtern ? S_EXTERN_WORD : S_WORD;
                 swprintf(out, MAX_BUF_SIZE + 2, L"%ls%lc%lc", buffer, type, L'\0');                
                 if (outOfBuf > 0)
                 {
@@ -681,7 +681,7 @@ static int sym_Cell(FILE *in, wint_t wc, wchar_t *out)
 end:
         if (status == CELL_1 || status == CELL_2)
         {
-                wprintf(ERR_EXPECT_SYMBLE("<Word> or <Immd>"));
+                wprintf(ERR_EXPECT_SYMBOL("<Word> or <Immd>"));
                 dgyPrintErrPos(NULL, 0, _fname, 0, 0);
         }
         else if (status == END)

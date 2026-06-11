@@ -12,10 +12,21 @@ void dgySetErr(ErrCode code, const wchar_t *msg)
 void dgyError(void)
 {
         static wchar_t *errmsg[ERR_CNT];
-        errmsg[ERR_NULLPTR] = L"Null pointer";
+        int init = 0;
+        if (init == 0)
+        {
+                init = 1;
+                errmsg[ERR_NULLPTR] = L"Null pointer";
+                errmsg[ERR_UNDERFLOW] = L"Stack underflow";
+                errmsg[ERR_OVERFLOW] = L"Stack overflow";
+                errmsg[ERR_OUT_OF_BOUNDS] = L"Array out of bounds";
+        }
         switch (_errcode)
         {
         case ERR_NULLPTR:
+        case ERR_UNDERFLOW:
+        case ERR_OVERFLOW:
+        case ERR_OUT_OF_BOUNDS:
                 wprintf(L"DGYError: %ls: %ls\n",
                         errmsg[_errcode], _detail);
                 break;
@@ -24,18 +35,18 @@ void dgyError(void)
         }
 }
 
-void dgyPrintErrPos(wchar_t *symble, int symbleLen, const char *fname, int row, int col)
+void dgyPrintErrPos(wchar_t *symbol, int symbolLen, const char *fname, int row, int col)
 {
         const wchar_t *fmt[] = {
-                L"Symble: '%ls' ",
+                L"Symbol: '%ls' ",
                 L"In file: '%s' ",
                 L"At row:%d ",
                 L"At col:%d "
         };                
-        if (symble)
+        if (symbol)
         {
-                symble[symbleLen] = L'\0';
-                wprintf(fmt[0], symble);
+                symbol[symbolLen] = L'\0';
+                wprintf(fmt[0], symbol);
         }
         if (fname)
         {       

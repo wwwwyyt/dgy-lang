@@ -1,6 +1,6 @@
 #include "dgy_test.h"
 
-static void getSymble(FILE *in, FILE *out)
+static void getSymbol(FILE *in, FILE *out)
 {
         enum
         {
@@ -9,7 +9,7 @@ static void getSymble(FILE *in, FILE *out)
         static wchar_t buffer[MAX_BUF_SIZE];
         dgyDoLexerOnce(in, buffer);
         int len = wcslen(buffer);
-        SymbleType type = buffer[len - 1];
+        SymbolType type = buffer[len - 1];
         buffer[len - 1] = L'\0';
         if (out)
         {
@@ -34,7 +34,7 @@ static void test_lexer(const char *fname, FILE *out)
                 {
                         fwprintf(out, L"Test %d: ", i);
                 }
-                getSymble(in, out);
+                getSymbol(in, out);
         }
 }
 

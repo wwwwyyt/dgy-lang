@@ -17,13 +17,13 @@ typedef enum
         S_EXTERN_WORD,
         S_CELL,
         S_REG,
-} SymbleType;
+} SymbolType;
 
 typedef struct
 {
-        const wchar_t *symble;
+        const wchar_t *symbol;
         int type;
-} SymbleTable;
+} SymbolTable;
 
 typedef enum
 {
@@ -53,7 +53,7 @@ typedef enum
         RESERVED_SYM_END,
 } ReservedSymType;
 
-static const SymbleTable _reservedSymTable[] = {
+static const SymbolTable _reservedSymTable[] = {
     // Must be sorted in descending order of length
     {NULL, 0},
     {L"重复执行", S_CHONG_FU_ZHI_XING},
@@ -100,7 +100,7 @@ typedef enum
         OP_SYM_END,
 } OpSymType;
 
-static const SymbleTable _opSymTable[] = {
+static const SymbolTable _opSymTable[] = {
     // Must be sorted in descending order of length
     {NULL, 0},
     {L"<=", S_BEQ},

@@ -22,5 +22,6 @@ ErrCode dgyDictInit(Dictionary *dict, size_t size);
 ErrCode dgyDictAdd(const wchar_t *name, int entry, Dictionary *dict);
 int dgyDictSearch(const wchar_t *name, Dictionary *dict);
 ErrCode dgyDictForget(const wchar_t *name, Dictionary *dict);
+void dgyDictDestroy(Dictionary *dict);
 
 #endif /* _dgy_dict_h */

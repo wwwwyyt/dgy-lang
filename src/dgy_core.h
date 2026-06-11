@@ -7,7 +7,8 @@
 #include "dgy_stack.h"
 #include "dgy_dict.h"
 
-ErrCode dgyDo();
-ErrCode dgyTestDo();
+ErrCode dgyDo(void);
+ErrCode dgyTestDo(void);
+void dgyQuit(void);
 
 #endif /* _dgy_core_h */

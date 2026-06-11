@@ -13,8 +13,8 @@ typedef enum
         S_COMMENT,
         S_RESERVED,
         S_OP,
-        S_NAME,
-        S_EXTERN_NAME,
+        S_WORD,
+        S_EXTERN_WORD,
         S_CELL,
         S_REG,
 } SymbleType;
@@ -121,7 +121,7 @@ static const SymbleTable _opSymTable[] = {
 enum
 {
         MAX_IMMD_LEN = 20,
-        MAX_NAME_LEN = 1024,
+        MAX_WORD_LEN = 1024,
 };
 enum
 {

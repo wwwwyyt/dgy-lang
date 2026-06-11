@@ -3,13 +3,13 @@
 
 #include "dgy_all.h"
 
-#define ERR_UNCLOSED_SYMBLE(sym) \
+#define ERR_UNCLOSED_SYMBLE(sym)                \
         L"Error: Unclosed symble: '" sym "'\n"
-#define ERR_INVALID_SYMBLE(sym) \
+#define ERR_INVALID_SYMBLE(sym)                 \
         L"Error: Invalid symble: '" sym "'\n"
-#define ERR_EXPECT_SYMBLE(sym) \
+#define ERR_EXPECT_SYMBLE(sym)                  \
         L"Error: Expect symble: '" sym "'\n"
-#define WARN_OUT_OF_BUFFER(len) \
+#define WARN_OUT_OF_BUFFER(len)                                 \
         L"Warning: Out of buffer. Exceeding length: %d\n", len
 
 typedef enum
@@ -23,5 +23,6 @@ typedef enum
 
 void dgySetErr(ErrCode code, const wchar_t *msg);
 void dgyError(void);
+void dgyPrintErrPos(wchar_t *symble, int symbleLen, const char *fname, int row, int col);
 
 #endif /* _dgy_error_h */

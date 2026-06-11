@@ -2,7 +2,7 @@
 
 static ErrCode resize(size_t newSize, Dictionary *dict)
 {
-        DictItem *newDict = (DictItem *)realloc(dict->dict, newSize * sizeof(DictItem));
+        DictItem *newDict = (DictItem *)realloc(dict->dict, newSize * sizeof(DictItem)); // Allocate Dictionary.dict
         if (newDict == NULL)
         {
                 perror("dgy_dict: resize: realloc() failed");
@@ -31,7 +31,7 @@ ErrCode dgyDictAdd(const wchar_t *name, int entry, Dictionary *dict)
 {
         size_t nameLen = wcslen(name);
         DictItem newItem;
-        newItem.name = (wchar_t *)malloc(nameLen * sizeof(wchar_t));
+        newItem.name = (wchar_t *)malloc(nameLen * sizeof(wchar_t)); // Allocate DictItem.name
         wcscpy(newItem.name, name);
         newItem.entry = entry;
         if (dict->top == dict->size / 2 && (CODE_SUCCESS != resize(2 * dict->size, dict)))
@@ -63,6 +63,7 @@ ErrCode dgyDictForget(const wchar_t *name, Dictionary *dict)
         {
                 return CODE_SUCCESS;
         }
+        free(dict->dict[entry].name); // Free DictItem.name        
         for (int i = entry; i < dict->top - 1; ++i)
         {
                 dict->dict[i].name = dict->dict[i + 1].name;
@@ -74,4 +75,15 @@ ErrCode dgyDictForget(const wchar_t *name, Dictionary *dict)
                 return CODE_FAILURE;
         }        
         return CODE_SUCCESS;
+}
+
+void dgyDictDestroy(Dictionary *dict)
+{
+        for (int i = 0; i < dict->top; ++i)
+        {
+                free(dict->dict[i].name); // Free DictItem.name
+                memset(&(dict->dict[i]), 0, sizeof(DictItem));
+        }
+        free(dict->dict); // Free Dictionary.dict
+        memset(dict, 0, sizeof(Dictionary));
 }

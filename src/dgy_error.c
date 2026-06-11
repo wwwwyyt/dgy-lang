@@ -23,3 +23,31 @@ void dgyError(void)
                 break;
         }
 }
+
+void dgyPrintErrPos(wchar_t *symble, int symbleLen, const char *fname, int row, int col)
+{
+        const wchar_t *fmt[] = {
+                L"Symble: '%ls' ",
+                L"In file: '%s' ",
+                L"At row:%d ",
+                L"At col:%d "
+        };                
+        if (symble)
+        {
+                symble[symbleLen] = L'\0';
+                wprintf(fmt[0], symble);
+        }
+        if (fname)
+        {       
+                wprintf(fmt[1], fname);
+        }
+        if (row)
+        {                
+                wprintf(fmt[2], row);
+        }
+        if (col)
+        {
+                wprintf(fmt[3], col);
+        }
+        wprintf(L"\n");
+}

@@ -14,8 +14,8 @@ enum
 typedef enum
 {
         STATTYPE_UNDEFINED,
-        ST_OBJ_BEGIN,
-        ST_OBJ_END,
+        ST_WORD_BEGIN,
+        ST_WORD_END,
         ST_MOV,
         ST_SET_REG,
         ST_EXEC,

@@ -4,7 +4,7 @@ static void getSymble(FILE *in, FILE *out)
 {
         enum
         {
-                MAX_BUF_SIZE = MAX_NAME_LEN + 2
+                MAX_BUF_SIZE = MAX_WORD_LEN + 2
         };
         static wchar_t buffer[MAX_BUF_SIZE];
         dgyDoLexerOnce(in, buffer);
@@ -36,6 +36,14 @@ static void test_lexer(const char *fname, FILE *out)
                 }
                 getSymble(in, out);
         }
+}
+
+
+static void test_file(const char *fname)
+{
+        DgyStack codeStack;
+        dgyStackInit(&codeStack, 16);
+        fdgyDoParser(fname, &codeStack);
 }
 
 static void test_lexer_immd(FILE *out)
@@ -70,9 +78,7 @@ static void test_lexer_cell(FILE *out)
 
 static void test_parser(void)
 {
-        DgyStack codeStack;
-        dgyStackInit(&codeStack, 16);
-        fdgyDoParser("test/test_parser.dgy", &codeStack);
+        test_file("test/test_parser.dgy");
 }
 
 ErrCode dgyUnitTest(void)
@@ -89,10 +95,18 @@ ErrCode dgyUnitTest(void)
                 test_lexer_reserved(stdout);
                 test_lexer_op(stdout);
                 test_lexer_cell(stdout);
-
+                test_parser();
                 dgyTestDo();
         }
-        test_parser();
 
+        /* test_lexer_immd(stdout); */
+        /* test_lexer_str(stdout); */
+        /* test_lexer_reserved(stdout); */
+        /* test_lexer_op(stdout); */
+        /* test_lexer_cell(stdout); */
+        
+        // test_file("test/test_parser_err.dgy");
+        dgyTestDo();
+        
         return CODE_SUCCESS;
 }

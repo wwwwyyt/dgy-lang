@@ -46,7 +46,7 @@ static ErrCode init()
         return code;
 }
 
-static ErrCode pop()
+static ErrCode pop(void)
 {
         return dgyStackPop(&_dataStack);
 }
@@ -56,7 +56,7 @@ static ErrCode push(cell_t data)
         return dgyStackPush(&_dataStack, data);
 }
 
-static cell_t top()
+static cell_t top(void)
 {
         return dgyStackTop(&_dataStack);
 }
@@ -88,4 +88,12 @@ ErrCode dgyTestDo()
                 dgyPrintStack(_codeStack.stack, 0, &(_codeStack.sp));
         }
         return code;
+}
+
+void dgyQuit(void)
+{
+        dgyStackDestroy(&_dataStack);
+        dgyStackDestroy(&_codeStack);
+        dgyDictDestroy(&_nameDict);
+        
 }

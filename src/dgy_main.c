@@ -15,5 +15,6 @@ int main(int argc, char *argv[])
 #ifdef dgy_UNIT_TEST
         result = dgyUnitTest();
 #endif
+        dgyQuit();
         return result;
 }

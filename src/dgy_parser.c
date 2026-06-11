@@ -3,8 +3,8 @@
 static ErrCode getSymble(FILE *in, DgyStack *code, DgyStack *analysis);
 static inline int isReserved(ReservedSymType type, cell_t *s, int top);
 static inline int isOp(OpSymType type, cell_t *s, int top);
-static inline int isName(cell_t *s, int top);
-static inline int isExternName(cell_t *s, int top);
+static inline int isWord(cell_t *s, int top);
+static inline int isExternWord(cell_t *s, int top);
 static inline int isCell(cell_t *s, int top);
 static inline int isCellReg(cell_t *s, int top);
 static inline int isStr(cell_t *s, int top);
@@ -12,10 +12,10 @@ static inline int isValue(cell_t *s, int top);
 static inline int isRelationalOp(cell_t *s, int top);
 static inline int isLogicalOp(cell_t *s, int top);
 
-static int match_ObjBegin(DgyStack *analysisStack, StatType *matchedType);
-static int match_ObjEnd(DgyStack *analysisStack, StatType *matchedType);
+static int match_WordBegin(DgyStack *analysisStack, StatType *matchedType);
+static int match_WordEnd(DgyStack *analysisStack, StatType *matchedType);
 static int match_Mov(DgyStack *analysisStack, StatType *matchedType);
-static int match_SimpObj(DgyStack *analysisStack, StatType *matchedType);
+static int match_SimpWord(DgyStack *analysisStack, StatType *matchedType);
 static int match_Exec(DgyStack *analysisStack, StatType *matchedType);
 static int match_If(DgyStack *analysisStack, StatType *matchedType);
 static int match_Else(DgyStack *analysisStack, StatType *matchedType);
@@ -32,8 +32,8 @@ static int matchStat(const StatType statType,
 
 static const StatType _statType[] = {
     STATTYPE_UNDEFINED,
-    ST_OBJ_BEGIN,
-    ST_OBJ_END,
+    ST_WORD_BEGIN,
+    ST_WORD_END,
     ST_MOV,
     ST_SET_REG,
     ST_EXEC,
@@ -50,13 +50,13 @@ static const StatType _statType[] = {
 
 static int (*_matchStatFuncList[])(DgyStack *, StatType *) = {
     /* Must be the same order of statType[] */
-    /* e.g. _matchStatFuncList[ST_OBJ_BEGIN] = match_ObjBegin */
+    /* e.g. _matchStatFuncList[ST_WORD_BEGIN] = match_WordBegin */
     NULL,
-    match_ObjBegin,  /* Object Declaration Begin */
-    match_ObjEnd,    /* Object Declaration End */
+    match_WordBegin,  /* Word Declaration Begin */
+    match_WordEnd,    /* Word Declaration End */
     match_Mov,       /* Move Value */
-    match_SimpObj,   /* Set Register */
-    match_Exec,      /* Execute Object */
+    match_SimpWord,   /* Simple Word Declaration */
+    match_Exec,      /* Execute Word */
     match_If,        /* Branch Begin */
     match_Else,      /* Branch Else */
     match_ElseEnd,   /* Branch End */
@@ -71,7 +71,7 @@ static ErrCode getSymble(FILE *in, DgyStack *codeStack, DgyStack *analysisStack)
 {
         enum
         {
-                MAX_BUF_SIZE = MAX_NAME_LEN + 2
+                MAX_BUF_SIZE = MAX_WORD_LEN + 2
         };
         static wchar_t buffer[MAX_BUF_SIZE];
         ErrCode code = dgyDoLexerOnce(in, buffer);
@@ -106,14 +106,14 @@ static inline int isOp(OpSymType type, cell_t *s, int top)
         return top >= 1 && s[top] == S_OP && s[top - 1] == type;
 }
 
-static inline int isName(cell_t *s, int top)
+static inline int isWord(cell_t *s, int top)
 {
-        return top >= 0 && s[top] == S_NAME;
+        return top >= 0 && s[top] == S_WORD;
 }
 
-static inline int isExternName(cell_t *s, int top)
+static inline int isExternWord(cell_t *s, int top)
 {
-        return top >= 0 && s[top] == S_EXTERN_NAME;
+        return top >= 0 && s[top] == S_EXTERN_WORD;
 }
 
 static inline int isCell(cell_t *s, int top)
@@ -136,12 +136,17 @@ static inline int isValue(cell_t *s, int top)
         if (top >= 0)
         {
                 SymbleType type = s[top];
-                return type == S_NAME || type == S_IMMD || type == S_CHAR;
+                return type == S_WORD || type == S_IMMD || type == S_CHAR;
         }
         else
         {
                 return 0;
         }
+}
+
+static inline int isImmd(cell_t *s, int top)
+{        
+        return top >= 0 && s[top] == S_IMMD;
 }
 
 static inline int isRelationalOp(cell_t *s, int top)
@@ -181,7 +186,7 @@ static inline int isLogicalOp(cell_t *s, int top)
         }
 }
 
-static int match_ObjBegin(DgyStack *analysisStack, StatType *matchedType)
+static int match_WordBegin(DgyStack *analysisStack, StatType *matchedType)
 {
         static int status = 0;
         int top = analysisStack->sp - 1;
@@ -193,11 +198,11 @@ static int match_ObjBegin(DgyStack *analysisStack, StatType *matchedType)
         }
         switch (status)
         {
-        case 0: /* <Name> */
-                if (isName(s, top))
+        case 0: /* <Word> */
+                if (isWord(s, top))
                 {
                         status = 1;
-                        *matchedType = ST_OBJ_BEGIN;
+                        *matchedType = ST_WORD_BEGIN;
                 }
                 break;
         case 1: /* "=" */
@@ -217,7 +222,7 @@ static int match_ObjBegin(DgyStack *analysisStack, StatType *matchedType)
         return status;
 }
 
-static int match_ObjEnd(DgyStack *analysisStack, StatType *matchedType)
+static int match_WordEnd(DgyStack *analysisStack, StatType *matchedType)
 {
         static int status = 0;
         int top = analysisStack->sp - 1;
@@ -233,18 +238,18 @@ static int match_ObjEnd(DgyStack *analysisStack, StatType *matchedType)
                 if (isOp(S_EQ, s, top))
                 {
                         status = 1;
-                        *matchedType = ST_OBJ_END;
+                        *matchedType = ST_WORD_END;
                 }
                 break;
-        case 1: /* <Name> */
-                if (isName(s, top))
+        case 1: /* <Word> */
+                if (isWord(s, top))
                 {
                         status = MATCH_COMPLETED;
                 }
                 else
                 {
-                        // Expect <Name>
-                        wprintf(ERR_EXPECT_SYMBLE("<Name>"));
+                        // Expect <Word>
+                        wprintf(ERR_EXPECT_SYMBLE("<Word>"));
                         status = 0;
                         *matchedType = STATTYPE_UNDEFINED;
                 }
@@ -298,15 +303,15 @@ static int match_Mov(DgyStack *analysisStack, StatType *matchedType)
                         *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 3: /* <CellReg> | <Name> */
-                if (isCellReg(s, top) || isName(s, top))
+        case 3: /* <CellReg> | <Word> */
+                if (isCellReg(s, top) || isWord(s, top))
                 {
                         status = MATCH_COMPLETED;
                 }
                 else
                 {
-                        // Expect <CellReg> or <Name>
-                        wprintf(ERR_EXPECT_SYMBLE("<CellReg> or <Name>"));
+                        // Expect <CellReg> or <Word>
+                        wprintf(ERR_EXPECT_SYMBLE("<CellReg> or <Word>"));
                         status = 0;
                         *matchedType = STATTYPE_UNDEFINED;
                 }
@@ -315,7 +320,7 @@ static int match_Mov(DgyStack *analysisStack, StatType *matchedType)
         return status;
 }
 
-static int match_SimpObj(DgyStack *analysisStack, StatType *matchedType)
+static int match_SimpWord(DgyStack *analysisStack, StatType *matchedType)
 {
         static int status = 0;
         int top = analysisStack->sp - 1;
@@ -334,15 +339,15 @@ static int match_SimpObj(DgyStack *analysisStack, StatType *matchedType)
                         *matchedType = ST_SET_REG;
                 }
                 break;
-        case 1: /* <Name> */
-                if (isName(s, top))
+        case 1: /* <Word> */
+                if (isWord(s, top))
                 {
                         status = 2;
                 }
                 else
                 {
-                        // Expect <Name>
-                        wprintf(ERR_EXPECT_SYMBLE("<Name>"));
+                        // Expect <Word>
+                        wprintf(ERR_EXPECT_SYMBLE("<Word>"));
                         status = 0;
                         *matchedType = STATTYPE_UNDEFINED;
                 }
@@ -360,15 +365,18 @@ static int match_SimpObj(DgyStack *analysisStack, StatType *matchedType)
                         *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 3: /* <CellReg> | <Value> */
-                if (isCellReg(s, top) || isValue(s, top))
+        case 3: /* <CellReg> | <Value> | <Word> | <ExternWord> */
+                if (isCellReg(s, top) ||
+                    isValue(s, top) ||
+                    isWord(s, top) ||
+                    isExternWord(s, top))
                 {
                         status = MATCH_COMPLETED;
                 }
                 else
                 {
-                        // Expect <CellReg> or <Value>
-                        wprintf(ERR_EXPECT_SYMBLE("<CellReg> or <Value>"));
+                        // Expect <CellReg> | <Value> | <Word> | <ExternWord>
+                        wprintf(ERR_EXPECT_SYMBLE("<CellReg> | <Value> | <Word> | <ExternWord>"));
                         status = 0;
                         *matchedType = STATTYPE_UNDEFINED;
                 }
@@ -397,8 +405,11 @@ static int match_Exec(DgyStack *analysisStack, StatType *matchedType)
                         *matchedType = ST_EXEC;
                 }
                 break;
-        case 1: /* {<Value> | <Str> | <CellReg>} ("结果存" | "无结果") */
-                if (isValue(s, top) || isStr(s, top) || isCellReg(s, top))
+        case 1: /* {<Value> | <ExternWord> | <Str> | <CellReg>} ("结果存" | "无结果") */
+                if (isValue(s, top) ||
+                    isExternWord(s, top) ||
+                    isStr(s, top) ||
+                    isCellReg(s, top))
                 {
                         status = 1;
                 }
@@ -418,15 +429,15 @@ static int match_Exec(DgyStack *analysisStack, StatType *matchedType)
                         *matchedType = STATTYPE_UNDEFINED;
                 }
                 break;
-        case 2: /* <CellReg> | <Name> */
-                if (isCellReg(s, top) || isName(s, top))
+        case 2: /* <CellReg> | <Word> */
+                if (isCellReg(s, top) || isWord(s, top))
                 {
                         status = MATCH_COMPLETED;
                 }
                 else
                 {
-                        // Expect <CellReg> or <Name>
-                        wprintf(ERR_EXPECT_SYMBLE("<CellReg> or <Name>"));
+                        // Expect <CellReg> or <Word>
+                        wprintf(ERR_EXPECT_SYMBLE("<CellReg> or <Word>"));
                         status = 0;
                         *matchedType = STATTYPE_UNDEFINED;
                 }
@@ -554,14 +565,14 @@ static int match_Hereis(DgyStack *analysisStack, StatType *matchedType)
                 }
                 break;
         case 1: /* <名称> */
-                if (isName(s, top))
+                if (isWord(s, top))
                 {
                         status = MATCH_COMPLETED;
                 }
                 else
                 {
-                        // Expect <Name>
-                        wprintf(ERR_EXPECT_SYMBLE("<Name>"));
+                        // Expect <Word>
+                        wprintf(ERR_EXPECT_SYMBLE("<Word>"));
                         status = 0;
                         *matchedType = STATTYPE_UNDEFINED;
                 }
@@ -590,14 +601,14 @@ static int match_Goto(DgyStack *analysisStack, StatType *matchedType)
                 }
                 break;
         case 1: /* <名称> */
-                if (isName(s, top))
+                if (isWord(s, top))
                 {
                         status = MATCH_COMPLETED;
                 }
                 else
                 {
-                        // Expect <Name>
-                        wprintf(ERR_EXPECT_SYMBLE("<Name>"));
+                        // Expect <Word>
+                        wprintf(ERR_EXPECT_SYMBLE("<Word>"));
                         status = 0;
                         *matchedType = STATTYPE_UNDEFINED;
                 }
@@ -709,13 +720,16 @@ static int match_LoopEnd(DgyStack *analysisStack, StatType *matchedType)
                         *matchedType = ST_LOOP_END;
                 }
                 break;
-        case 1: /* <数值> | "成立" | "不成立" */
+        case 1: /* "成立" | "不成立" */
                 if (isReserved(S_CHENG_LI, s, top) ||
                     isReserved(S_BU_CHENG_LI, s, top))
                 {
                         status = MATCH_COMPLETED;
                 }
-                else if (isValue(s, top))
+                /* <Immd> | <Word> | <ExternWord> */
+                else if (isImmd(s, top) ||
+                         isWord(s, top) ||
+                         isExternWord(s, top))
                 {
                         status = 2;
                 }

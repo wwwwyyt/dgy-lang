@@ -7,7 +7,6 @@ static inline int isReserved(ReservedSymType type, cell_t *s, int top);
 static inline int isOp(OpSymType type, cell_t *s, int top);
 static inline int isWord(cell_t *s, int top);
 static inline int isExternWord(cell_t *s, int top);
-static inline int isCell(cell_t *s, int top);
 static inline int isCellReg(cell_t *s, int top);
 static inline int isStr(cell_t *s, int top);
 static inline int isValue(cell_t *s, int top);
@@ -145,11 +144,6 @@ static inline int isWord(cell_t *s, int top)
 static inline int isExternWord(cell_t *s, int top)
 {
         return top >= 0 && s[top] == S_EXTERN_WORD;
-}
-
-static inline int isCell(cell_t *s, int top)
-{
-        return top >= 0 && s[top] == S_CELL;
 }
 
 static inline int isCellReg(cell_t *s, int top)

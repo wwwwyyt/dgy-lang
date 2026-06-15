@@ -8,7 +8,7 @@ static void discard(DgyStack *stack, Dictionary *_)
         stack->sp -= length + 1;
 }
 
-static inline void getValue_Immd(DgyStack *stack, int bp, wchar_t *s)
+static void getValue_Immd(DgyStack *stack, int bp, wchar_t *s)
 {
         cell_t val;
         val = wcstoll(s, NULL, 0);
@@ -16,7 +16,7 @@ static inline void getValue_Immd(DgyStack *stack, int bp, wchar_t *s)
         stack->sp = bp + 1;        
 }
 
-static inline void getValue_Word(DgyStack *stack, Dictionary *dict, int bp, wchar_t *word)
+static void getValue_Word(DgyStack *stack, Dictionary *dict, int bp, wchar_t *word)
 {
         cell_t entry = dgyDictSearch(word, dict);
         if (entry == -1)
@@ -29,7 +29,7 @@ static inline void getValue_Word(DgyStack *stack, Dictionary *dict, int bp, wcha
         stack->sp = bp + 1;        
 }
 
-static inline void getValue_ExternWord(DgyStack *stack, Dictionary *dict, int bp, wchar_t *word)
+static void getValue_ExternWord(DgyStack *stack, Dictionary *dict, int bp, wchar_t *word)
 {
         cell_t entry = dgyDictSearch(word, dict);
         if (entry == -1)

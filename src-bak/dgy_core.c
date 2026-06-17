@@ -108,7 +108,17 @@ ErrCode dgyTestDo()
         int bp = _core.codeStack.sp;
         while (1)
         {
+                int oldsp = _core.codeStack.sp;
                 code = dgyDoParserOnce(stdin, &_core.codeStack);
+                for (int i = oldsp; i < _core.codeStack.sp; ++i)
+                {
+                        dgyStackPush(&_core.dataStack, _core.codeStack.stack[i]);
+                }
+                for (int i = oldsp; i < _core.codeStack.sp; ++i)
+                {
+                        dgyStackPop(&_core.codeStack);
+                }
+                dgyExec();
                 if (CODE_SUCCESS != code)
                         return code;
                 dgyStackDump(&_core.codeStack, bp,_core.codeStack.sp);

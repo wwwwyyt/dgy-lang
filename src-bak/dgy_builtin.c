@@ -1,4 +1,5 @@
 #include "dgy_builtin.h"
+#include "dgy_all.h"
 
 static const wchar_t *_builtinWordName[BUILT_IN_WORD_CNT];
 static void (*_dgyBuiltInWords[BUILT_IN_WORD_CNT])(DgyStack *stack);
@@ -19,8 +20,12 @@ void dgyAdd(DgyStack *stack)
                 dgySetErr(ERR_UNDERFLOW, L"dgyAdd");
                 return;
         }
-        s[bp] += s[bp + 1];
-        stack->sp = bp + retc;
+        if (s[bp].type == T_SINT &&
+            s[bp + 1].type == T_SINT)
+        {
+                s[bp].data.sint += s[bp + 1].data.sint;
+                stack->sp = bp + retc;
+        }
 }
 
 void dgyInc(DgyStack *stack)
@@ -34,7 +39,7 @@ void dgyInc(DgyStack *stack)
                 dgySetErr(ERR_UNDERFLOW, L"dgyInc");
                 return;
         }
-        s[bp]++;
+        s[bp].data.sint++;
         stack->sp = bp + retc;
 }
 
@@ -48,7 +53,7 @@ void dgySub(DgyStack *stack)
         {
                 dgySetErr(ERR_UNDERFLOW, L"dgySub");
                 return;
-        }        
+        }
         s[bp] -= s[bp + 1];
         stack->sp = bp + retc;
 }
@@ -63,7 +68,7 @@ void dgyDec(DgyStack *stack)
         {
                 dgySetErr(ERR_UNDERFLOW, L"dgyDec");
                 return;
-        }        
+        }
         s[bp]--;
         stack->sp = bp + retc;
 }
@@ -71,7 +76,7 @@ void dgyDec(DgyStack *stack)
 void dgyMul(DgyStack *stack)
 {
         const int argc = 2;
-        const int retc = 1;        
+        const int retc = 1;
         const int bp = stack->sp - argc;
         cell_t *s = stack->stack;
         if (bp < 0)
@@ -86,7 +91,7 @@ void dgyMul(DgyStack *stack)
 void dgyDiv(DgyStack *stack)
 {
         const int argc = 2;
-        const int retc = 1;        
+        const int retc = 1;
         const int bp = stack->sp - argc;
         cell_t *s = stack->stack;
         if (bp < 0)
@@ -101,7 +106,7 @@ void dgyDiv(DgyStack *stack)
 void dgyAnd(DgyStack *stack)
 {
         const int argc = 2;
-        const int retc = 1;        
+        const int retc = 1;
         const int bp = stack->sp - argc;
         cell_t *s = stack->stack;
         if (bp < 0)
@@ -116,14 +121,14 @@ void dgyAnd(DgyStack *stack)
 void dgyOr(DgyStack *stack)
 {
         const int argc = 2;
-        const int retc = 1;        
+        const int retc = 1;
         const int bp = stack->sp - argc;
         cell_t *s = stack->stack;
         if (bp < 0)
         {
                 dgySetErr(ERR_UNDERFLOW, L"dgyOr");
                 return;
-        }        
+        }
         s[bp] |= s[bp + 1];
         stack->sp = bp + retc;
 }
@@ -131,14 +136,14 @@ void dgyOr(DgyStack *stack)
 void dgyNot(DgyStack *stack)
 {
         const int argc = 1;
-        const int retc = 1;        
+        const int retc = 1;
         const int bp = stack->sp - argc;
         cell_t *s = stack->stack;
         if (bp < 0)
         {
                 dgySetErr(ERR_UNDERFLOW, L"dgyNot");
                 return;
-        }        
+        }
         s[bp] = ~s[bp];
         stack->sp = bp + retc;
 }
@@ -146,14 +151,14 @@ void dgyNot(DgyStack *stack)
 void dgyNor(DgyStack *stack)
 {
         const int argc = 2;
-        const int retc = 1;        
+        const int retc = 1;
         const int bp = stack->sp - argc;
         cell_t *s = stack->stack;
         if (bp < 0)
         {
                 dgySetErr(ERR_UNDERFLOW, L"dgyNor");
                 return;
-        }        
+        }
         s[bp] ^= s[bp + 1];
         stack->sp = bp + retc;
 }
@@ -168,8 +173,8 @@ void dgyFormat(DgyStack *stack)
         {
                 dgySetErr(ERR_UNDERFLOW, L"dgyFormat");
                 return;
-        }        
-        const wchar_t wc1 = s[bp], wc2 = s[bp + 1];        
+        }
+        const wchar_t wc1 = s[bp], wc2 = s[bp + 1];
         if (wc1 == L'整' && wc2 == L'数')
                 s[bp] = 0;
         else if (wc1 == L'字' && wc2 == L'符')
@@ -191,7 +196,7 @@ void dgyPrintf(DgyStack *stack)
         {
                 dgySetErr(ERR_UNDERFLOW, L"dgyPrintf");
                 return;
-        }        
+        }
         const int fmt = s[bp];
         const wchar_t wc = s[bp + 1];
         switch (fmt)
@@ -202,12 +207,12 @@ void dgyPrintf(DgyStack *stack)
         case 1:                 /* *字符* 格式的 */
                 wprintf(L"%lc", wc);
                 break;
-        case 2:                 /* *单元* 格式的 */                
+        case 2:                 /* *单元* 格式的 */
         default:
                 wprintf(L"0x%llX", wc);
                 break;
         }
-        stack->sp = bp + retc;        
+        stack->sp = bp + retc;
 }
 
 const wchar_t *dgyGetBuiltInWordName(BuiltInWordCode op)

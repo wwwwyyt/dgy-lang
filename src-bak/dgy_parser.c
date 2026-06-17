@@ -117,11 +117,10 @@ static ErrCode getSymbol(FILE *in, DgyStack *codeStack, DgyStack *analysisStack)
                                 dgyStackPush(analysisStack, buffer[i - 1]);
                         }
                         dgyStackPush(analysisStack, type);
-
                         /* Push symbol length to code stack */
                         dgyStackPush(codeStack, i + 1);
                         break;
-                }                
+                }
         }
         return code;
 }

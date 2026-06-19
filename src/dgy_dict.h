@@ -7,21 +7,21 @@
 typedef struct
 {
         wchar_t *name;
-        int entry;
+        i32 entry;
 } DictItem;
 
 typedef struct
 {
         DictItem *dict;
-        int top;
+        i32 top;
         size_t size;
-} Dictionary;
+} DgyDict;
 
-ErrCode dgyDictInit(Dictionary *dict, size_t size);
-ErrCode dgyDictAdd(const wchar_t *name, int entry, Dictionary *dict);
-int dgyDictSearch(const wchar_t *name, Dictionary *dict);
-ErrCode dgyDictForget(const wchar_t *name, Dictionary *dict);
-ErrCode dgyDictDestroy(Dictionary *dict);
-ErrCode dgyDictDump(Dictionary *dict);
+ErrCode dgyDictInit(DgyDict *dict, size_t size);
+ErrCode dgyDictAdd(DgyDict *dict, const wchar_t *name, i32 entry);
+i32 dgyDictSearch(const DgyDict *dict, const wchar_t *name);
+ErrCode dgyDictForget(DgyDict *dict, const wchar_t *name);
+ErrCode dgyDictDestroy(DgyDict *dict);
+ErrCode dgyDictDump(const DgyDict *dict);
 
 #endif /* _dgy_dict_h */

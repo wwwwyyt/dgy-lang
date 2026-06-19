@@ -2,8 +2,11 @@
 #define _dgy_test_h
 
 #include "dgy_all.h"
-#include "dgy_core.h"
+#include "dgy_error.h"
+#include "dgy_lexer.h"
+#include "dgy_parser.h"
+#include "dgy_stack.h"
 
-ErrCode dgyUnitTest();
+void dgyUnitTest(void);
 
 #endif /* _dgy_test_h */

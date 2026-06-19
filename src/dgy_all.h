@@ -19,11 +19,20 @@ typedef uint8_t u8;
 
 typedef enum
 {
-        T_UNDEFIND,
-        T_UINT,
-        T_SINT,
-        T_REAL,
-        T_WCHAR
+        CELL_FLAG_LEN,
+  
+        CELL_LEXER_IMMD,
+        CELL_LEXER_STR,        
+        CELL_LEXER_CHAR,
+        CELL_LEXER_COMMENT,        
+        CELL_LEXER_RESERVED,
+        CELL_LEXER_OP,
+        CELL_LEXER_WORD,
+        CELL_LEXER_EXTERN_WORD,
+        CELL_LEXER_WORD_CELL,
+        CELL_LEXER_WORD_REG,
+        CELL_LEXER_IMMD_CELL,
+        CELL_LEXER_IMMD_REG,
 } CellType;
 
 typedef struct

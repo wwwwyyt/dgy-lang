@@ -186,7 +186,7 @@ static i32 match_WordBegin(DgyParser *parser, StatType *matchedType)
         cell_t sym;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
         if (MATCH_COMPLETED == status ||
@@ -228,7 +228,7 @@ static i32 match_WordEnd(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -271,7 +271,7 @@ static i32 match_Mov(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -343,7 +343,7 @@ static i32 match_SimpWord(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -418,7 +418,7 @@ static i32 match_Exec(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -488,7 +488,7 @@ static i32 match_If(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -547,7 +547,7 @@ static i32 match_Else(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -574,7 +574,7 @@ static i32 match_ElseEnd(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -601,7 +601,7 @@ static i32 match_Hereis(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -642,7 +642,7 @@ static i32 match_Goto(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -683,7 +683,7 @@ static i32 match_LoopBegin(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -710,7 +710,7 @@ static i32 match_LoopCheck(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -770,7 +770,7 @@ static i32 match_LoopEnd(DgyParser *parser, StatType *matchedType)
         static i32 status = 0;
         DgyStack *analyStack = &(parser->analyStack);
         DgyStack *symbolStack = &(parser->symbolStack);
-        DgyAnalyser *analyser = parser->analyser;
+        DgyAnalyser *analyser = &(parser->analyser);
         cell_t sym;
         dgyStackTop(analyStack, &sym);
         dgyGetErr();
@@ -891,7 +891,9 @@ ErrCode dgyDoParserOnce(DgyParser *parser, FILE *in)
         return CODE_SUCCESS;
 }
 
-ErrCode dgyParserInit(DgyParser *parser, DgyAnalyser *analyser)
+ErrCode dgyParserInit(DgyParser *parser,
+                      DgyStack *codeStack,
+                      DgyDict *wordDict)
 {
         if (!parser)
         {
@@ -902,7 +904,8 @@ ErrCode dgyParserInit(DgyParser *parser, DgyAnalyser *analyser)
         dgyStackInit(&(parser->analyStack), 16);
         /* Create symbolStack */
         dgyStackInit(&(parser->symbolStack), 16);
-        parser->analyser = analyser;
+        /* Create analyser */
+        dgyAnalyserInit(&(parser->analyser), codeStack, wordDict);
         return CODE_SUCCESS;
 }
 

@@ -14,10 +14,12 @@ enum
 typedef struct
 {
         DgyStack analyStack, symbolStack;
-        DgyAnalyser *analyser;
+        DgyAnalyser analyser;
 } DgyParser;
 
-ErrCode dgyParserInit(DgyParser *parser, DgyAnalyser *analyser);
+ErrCode dgyParserInit(DgyParser *parser,
+                      DgyStack *codeStack,
+                      DgyDict *wordDict);
 ErrCode dgyParserDestroy(DgyParser *parser);
 ErrCode dgyDoParserOnce(DgyParser *parser, FILE *in);
 

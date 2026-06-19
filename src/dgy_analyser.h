@@ -30,6 +30,7 @@ typedef struct
 {
         DgyStack *codeStack;
         DgyDict *wordDict;
+        i32 oldsp;              /* Old sp of codeStack */
 } DgyAnalyser;
 
 /* Append data to codeStack */

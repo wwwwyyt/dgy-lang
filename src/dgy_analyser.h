@@ -31,6 +31,9 @@ typedef struct
         DgyStack *codeStack;
         DgyDict *wordDict;
         i32 oldsp;              /* Old sp of codeStack */
+        i32 level;              /* Level of word block */
+        i32 parentEntry;    /* Entry in the codeStack of current
+                                   word block */
 } DgyAnalyser;
 
 /* Append data to codeStack */

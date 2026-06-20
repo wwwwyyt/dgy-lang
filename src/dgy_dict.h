@@ -8,6 +8,7 @@ typedef struct
 {
         wchar_t *name;
         i32 entry;
+        i32 level;
 } DictItem;
 
 typedef struct
@@ -18,9 +19,9 @@ typedef struct
 } DgyDict;
 
 ErrCode dgyDictInit(DgyDict *dict, size_t size);
-ErrCode dgyDictAdd(DgyDict *dict, const wchar_t *name, i32 entry);
-i32 dgyDictSearch(const DgyDict *dict, const wchar_t *name);
-ErrCode dgyDictForget(DgyDict *dict, const wchar_t *name);
+ErrCode dgyDictAdd(DgyDict *dict, const wchar_t *name, i32 entry, i32 level);
+i32 dgyDictSearchIn(const DgyDict *dict, const wchar_t *name, i32 parentEntry);
+i32 dgyDictSearchEx(const DgyDict *dict, const wchar_t *name, i32 parentEntry);
 ErrCode dgyDictDestroy(DgyDict *dict);
 ErrCode dgyDictDump(const DgyDict *dict);
 

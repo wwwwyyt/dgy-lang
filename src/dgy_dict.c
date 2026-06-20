@@ -37,7 +37,7 @@ ErrCode dgyDictInit(DgyDict *dict, size_t size)
         return CODE_SUCCESS;
 }
 
-ErrCode dgyDictAdd(DgyDict *dict, const wchar_t *name, i32 entry)
+ErrCode dgyDictAdd(DgyDict *dict, const wchar_t *name, i32 entry, i32 level)
 {
         if (!name || !dict)
         {
@@ -49,6 +49,7 @@ ErrCode dgyDictAdd(DgyDict *dict, const wchar_t *name, i32 entry)
         newItem.name = (wchar_t *)malloc(nameLen * sizeof(wchar_t)); // Allocate DictItem.name
         wcscpy(newItem.name, name);
         newItem.entry = entry;
+        newItem.level = level;
         if (dict->top == dict->size / 2 && (CODE_SUCCESS != resize(2 * dict->size, dict)))
         {
                 return CODE_FAILURE;
@@ -57,50 +58,90 @@ ErrCode dgyDictAdd(DgyDict *dict, const wchar_t *name, i32 entry)
         return CODE_SUCCESS;
 }
 
-i32 dgyDictSearch(const DgyDict *dict, const wchar_t *name)
+static i32 searchItemByEntry(const DgyDict *dict, i32 entry)
+{
+        i32 itemIdx = -1;
+        for (i32 i = dict->top - 1; i >= 0; --i)
+        {
+                DictItem item = dict->dict[i];
+                if (item.entry == entry)
+                {
+                        itemIdx = i;
+                        break;
+                }
+        }
+        return itemIdx;        
+}
+
+i32 dgyDictSearchIn(const DgyDict *dict, const wchar_t *name, i32 parentEntry)
 {
         if (!name || !dict)
         {
-                dgySetErr(ERR_NULLPTR, L"dgyDictSearch");
+                dgySetErr(ERR_NULLPTR, L"dgyDictSearchIn");
                 return -1;
         }
         i32 entry = -1;
-        /* Start the search with the dictionary's latest entry */
-        for (i32 i = dict->top - 1; i >= 0; --i)
+        if (parentEntry == -1)
         {
-                if (wcscmp(dict->dict[i].name, name) == 0)
+                for (i32 i = dict->top - 1; i >= 0; --i)
                 {
-                        entry = dict->dict[i].entry;
-                        break;
+                        DictItem item = dict->dict[i];
+                        if (item.level == 0 &&
+                            wcscmp(item.name, name) == 0)
+                        {
+                                entry = item.entry;
+                                break;
+                        }
+                }          
+        }
+        else if (parentEntry >= 0)
+        {
+                i32 itemIdx = searchItemByEntry(dict, parentEntry);
+                if (itemIdx >= 0)
+                {
+                        i32 parentLevel = dict->dict[itemIdx].level;
+                        for (i32 i = itemIdx + 1; dict->dict[i].level < parentLevel; ++i)
+                        {
+                                DictItem item = dict->dict[i];
+                                if (item.level == parentLevel + 1 &&
+                                    wcscmp(item.name, name) == 0)
+                                {
+                                        entry = item.entry;
+                                        /* Don't break */
+                                }
+                        }
                 }
         }
         return entry;
 }
 
-ErrCode dgyDictForget(DgyDict *dict, const wchar_t *name)
+i32 dgyDictSearchEx(const DgyDict *dict, const wchar_t *name, i32 parentEntry)
 {
         if (!name || !dict)
         {
-                dgySetErr(ERR_NULLPTR, L"dgyDictForget");
-                return CODE_FAILURE;
-        }        
-        i32 entry = dgyDictSearch(dict, name);
-        if (entry == -1)
-        {
-                return CODE_SUCCESS;
+                dgySetErr(ERR_NULLPTR, L"dgyDictSearchIn");
+                return -1;
         }
-        free(dict->dict[entry].name); // Free DictItem.name        
-        for (i32 i = entry; i < dict->top - 1; ++i)
+        i32 entry = -1;
+        if (parentEntry >= 0)
         {
-                dict->dict[i].name = dict->dict[i + 1].name;
-                dict->dict[i].entry = dict->dict[i + 1].entry;
+                i32 itemIdx = searchItemByEntry(dict, parentEntry);
+                if (itemIdx >= 0)
+                {
+                        i32 parentLevel = dict->dict[itemIdx].level;
+                        for (i32 i = itemIdx - 1; i >= 0; --i)
+                        {
+                                DictItem item = dict->dict[i];
+                                if (item.level == parentLevel &&
+                                    wcscmp(item.name, name) == 0)
+                                {
+                                        entry = item.entry;
+                                        break;
+                                }
+                        }
+                }
         }
-        (dict->top)--;
-        if (dict->top == dict->size / 4 && (CODE_SUCCESS != resize(dict->size / 2, dict)))
-        {
-                return CODE_FAILURE;
-        }        
-        return CODE_SUCCESS;
+        return entry;
 }
 
 ErrCode dgyDictDestroy(DgyDict *dict)

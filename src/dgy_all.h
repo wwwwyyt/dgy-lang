@@ -33,6 +33,13 @@ typedef enum
         CELL_LEXER_WORD_REG,
         CELL_LEXER_IMMD_CELL,
         CELL_LEXER_IMMD_REG,
+        
+        CELL_CODE_DATA,
+        CELL_CODE_WORD,
+        CELL_CODE_BUILTIN_WORD,
+        CELL_CODE_DATA_ADDR,
+        CELL_CODE_CODE_ADDR,
+        CELL_CODE_REG_ADDR,
 } CellType;
 
 typedef struct

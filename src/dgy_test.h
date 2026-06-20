@@ -6,6 +6,7 @@
 #include "dgy_lexer.h"
 #include "dgy_parser.h"
 #include "dgy_stack.h"
+#include "dgy_builtin.h"
 
 void dgyUnitTest(void);
 

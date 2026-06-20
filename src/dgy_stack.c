@@ -140,29 +140,39 @@ ErrCode dgyStackDump(const DgyStack *s, i32 start, i32 end)
                 dgySetErr(ERR_NULLPTR, L"dgyStackDump");
                 return CODE_FAILURE;
         }
-        if (start == -1 && end == -1)
+        i32 si, ei;
+        if (start < 0 && end < 0)
         {
-                for (i32 i = 0; i < s->sp; ++i)
-                {
-                        wprintf(L"0x%llX ", s->stack[i]);
-                }                
+                si = 0;
+                ei = s->sp;
+        }
+        else if (start < 0 && end >= 0)
+        {
+                si = 0;
+                ei = end;
+        }
+        else if (start >= 0 && end < 0)
+        {
+                si = start;
+                ei = s->sp;
         }
         else
         {
-                for (i32 i = start; i < end; ++i)
-                {
-                        if (i >= 0 && i < s->size)
-                        {
-                                wprintf(L"0x%llX ", s->stack[i]);
-                        }
-                        else
-                        {
-
-                                dgySetErr(ERR_OUT_OF_BOUNDS, L"dgyStackDump");
-                                return CODE_FAILURE;
-                        }
-                }
+                si = start;
+                ei = end;
         }
+        for (i32 i = si; i < ei; ++i)
+        {
+                if (i >= 0 && i < s->size)
+                {
+                        wprintf(L"0x%llX ", s->stack[i]);
+                }
+                else
+                {
+                        dgySetErr(ERR_OUT_OF_BOUNDS, L"dgyStackDump");
+                        return CODE_FAILURE;
+                }
+        }        
         wprintf(L"\n");
         return CODE_SUCCESS;
 }

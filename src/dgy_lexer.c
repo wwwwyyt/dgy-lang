@@ -169,6 +169,7 @@ static SymbolType sym_Immd(FILE *in, wint_t wc, wchar_t *buffer)
         {
                 MAX_BUF_SIZE = MAX_IMMD_LEN,
         };
+        static const wchar_t *symName = L"<立即数>";
         SymbolType matched = S_UNDEFINED;
         i32 bufIdx = 0;
         i32 outOfBuf = 0;
@@ -289,10 +290,12 @@ end:
         switch (status)
         {
         case INT_1:
-                wprintf(ERR_EXPECT_SYMBOL("digits"));
+                wprintf(L"%ls: ", symName);
+                wprintf(ERR_EXPECT_SYMBOL("<数字>"));
                 break;
         case HEX_2:
-                wprintf(ERR_EXPECT_SYMBOL("xdigits"));
+                wprintf(L"%ls: ", symName);
+                wprintf(ERR_EXPECT_SYMBOL("<十六进制数字>"));
                 break;
         case INT_END:
         case HEX_END:
@@ -300,6 +303,7 @@ end:
                 buffer[bufIdx] = L'\0';
                 if (outOfBuf > 0)
                 {
+                        wprintf(L"%ls: ", symName);
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
                 }
                 break;
@@ -320,6 +324,7 @@ static SymbolType sym_Str(FILE *in, wint_t wc, wchar_t *buffer)
         {
                 MAX_BUF_SIZE = MAX_STR_LEN,
         };
+        static const wchar_t *symName = L"<字符串>";
         SymbolType matched = S_UNDEFINED;
         i32 bufIdx = 0;
         i32 status = START;
@@ -363,9 +368,11 @@ end:
         switch (status)
         {
         case STR_1:
+                wprintf(L"%ls: ", symName);
                 wprintf(ERR_UNCLOSED_SYMBOL("*"));
                 break;
         case STR_2:
+                wprintf(L"%ls: ", symName);
                 wprintf(ERR_INVALID_SYMBOL("\\n"));
                 break;
         case STR_END:                
@@ -376,6 +383,7 @@ end:
                 buffer[bufIdx] = L'\0';
                 if (outOfBuf > 0)
                 {
+                        wprintf(L"%ls: ", symName);
                         wprintf(WARN_OUT_OF_BUFFER(outOfBuf));
                 }
                 break;
@@ -393,6 +401,7 @@ static SymbolType sym_Comment(FILE *in, wint_t wc, wchar_t *buffer)
                 CMT_3,
                 CMT_END
         };
+        static const wchar_t *symName = L"<注释>";
         SymbolType matched = S_UNDEFINED;
         i32 status = START;
         if (wc == L'/')
@@ -446,9 +455,11 @@ end:
         switch (status)
         {
         case CMT_2:
+                wprintf(L"%ls: ", symName);
                 wprintf(ERR_UNCLOSED_SYMBOL("/*"));
                 break;
         case CMT_3:
+                wprintf(L"%ls: ", symName);
                 wprintf(ERR_UNCLOSED_SYMBOL("/"));
                 break;
         case CMT_END:
@@ -462,15 +473,11 @@ end:
 
 static SymbolType sym_Reserved(FILE *in, wint_t wc, wchar_t *buffer)
 {
-        enum
-        {
-                START = 1
-        };
         i32 bufIdx = 0;
         i32 idx = 0;
         SymbolType type = S_RESERVED_UNDEFINED; // Init with an invalid type
         SymbolType matched = S_UNDEFINED;
-        for (i32 i = START; i < RESERVED_SYM_CNT; ++i)
+        for (i32 i = 0; i < RESERVED_SYM_CNT; ++i)
         {
                 idx = 0;
                 if (isCharAt(wc, _reservedSymTable[i], idx))
@@ -536,15 +543,11 @@ end:
 
 static SymbolType sym_Op(FILE *in, wint_t wc, wchar_t *buffer)
 {
-        enum
-        {
-                START = 1
-        };
         i32 bufIdx = 0;
         i32 idx = 0;
         SymbolType type = S_OP_UNDEFINED; // Init with an invalid type
         SymbolType matched = S_UNDEFINED;
-        for (i32 i = START; i < OP_SYM_CNT; ++i)
+        for (i32 i = 0; i < OP_SYM_CNT; ++i)
         {
                 idx = 0;
                 if (isCharAt(wc, _opSymTable[i], idx))
@@ -683,12 +686,13 @@ static SymbolType sym_Cell(FILE *in, wint_t wc, wchar_t *buffer)
         };
         static const SymbolType matchedType[2][2] =
         {
-                {S_WORD_CELL, S_WORD_REG},
-                {S_IMMD_CELL, S_IMMD_REG},
-        };        
+                { S_WORD_REG, S_IMMD_REG },
+                { S_WORD_CELL, S_IMMD_CELL },
+        };
+        static const wchar_t *symName = L"<单元/寄存器>";
         SymbolType matched = S_UNDEFINED;
         i32 isReg = 0; // Flag of Register
-        i32 isImmd = 0;
+        i32 isImmd = 0; // Flag of immediate number
         i32 status = START;
         enum
         {
@@ -704,13 +708,13 @@ static SymbolType sym_Cell(FILE *in, wint_t wc, wchar_t *buffer)
                 if (getWideChar(&wc, in) != WEOF)
                 {
                         status = CELL_2;
-                        if (sym_Immd(in, wc, buffer))
+                        if (S_UNDEFINED != sym_Immd(in, wc, buffer))
                         {
                                 isImmd = 1;
                                 status = END;
                                 goto end;
                         }
-                        else if (sym_Word(in, wc, buffer))
+                        else if (S_UNDEFINED != sym_Word(in, wc, buffer))
                         {
                                 isImmd = 0;
                                 status = END;
@@ -735,7 +739,8 @@ static SymbolType sym_Cell(FILE *in, wint_t wc, wchar_t *buffer)
 end:
         if (status == CELL_1 || status == CELL_2)
         {
-                wprintf(ERR_EXPECT_SYMBOL("<Word> or <Immd>"));
+                wprintf(L"%ls: ", symName);
+                wprintf(ERR_EXPECT_SYMBOL("<词语> 或 <立即数>"));
         }
         else if (status == END)
         {
@@ -906,7 +911,7 @@ ErrCode dgyDoLexerOnce(FILE *in, DgyStack *out)
         }
         if (S_UNDEFINED == matchedType)
         {
-                wprintf(L"Error: Unrecognized character: '%lc'\n", wc);
+                wprintf(ERR_UNRECOGNIZED_CHAR(wc));
                 return CODE_FAILURE;
         }
         return CODE_SUCCESS;

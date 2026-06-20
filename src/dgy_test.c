@@ -1,8 +1,5 @@
 #include "dgy_test.h"
-#include "dgy_analyser.h"
-#include "dgy_dict.h"
-#include "dgy_parser.h"
-#include "dgy_stack.h"
+#include "dgy_builtin.h"
 
 static void test_lexer(void)
 {
@@ -20,14 +17,15 @@ static void test_parser(void)
         DgyDict word;
         dgyDictInit(&word, 16);
 
+        dgyBuiltinInit(&code, &word);
+
         DgyParser parser;
-        dgyParserInit(&parser);
-
-        DgyAnalyser analyser;
-        dgyAnalyserInit(&analyser, &code, &word);
-
+        dgyParserInit(&parser, &code, &word);
+        
         dgyDoParserOnce(&parser, stdin);
-        dgyStackDump(&code, -1, -1);
+        dgyStackDump(&code, BUILTIN_CNT, -1);
+        dgyDoParserOnce(&parser, stdin);
+        dgyStackDump(&code, BUILTIN_CNT, -1);
 
         dgyParserDestroy(&parser);
         dgyDictDestroy(&word);
@@ -38,6 +36,8 @@ void dgyUnitTest(void)
 {
         if (0)
         {
-                test_lexer();                
+                test_lexer();
+                test_parser();
         }
+        test_parser();                                
 }

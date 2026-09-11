@@ -6,11 +6,11 @@
 #include "dgy_type.h"
 
 #define ERR_UNCLOSED_SYMBOL(sym) \
-        L"【错误】: 未闭合符号: '" sym "'\n"
+        L"【错误】: 未闭合符号: '%ls'\n", sym
 #define ERR_INVALID_SYMBOL(sym) \
-        L"【错误】: 非法符号: '" sym "'\n"
+        L"【错误】: 非法符号: '%ls'\n", sym
 #define ERR_EXPECT_SYMBOL(sym) \
-        L"【错误】: 期望符号: '" sym "'\n"
+        L"【错误】: 期望符号: '%ls'\n", sym
 #define ERR_UNRECOGNIZED_CHAR(ch) \
         L"【错误】: 未识别的字符: '%lc'\n", ch
 #define WARN_UNDEFINED_WORD(word) \

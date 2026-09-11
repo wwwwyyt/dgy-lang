@@ -27,7 +27,7 @@ typedef struct
         DgyStatement statement;
 
         /** @brief 当前分析的符号在符号栈中的索引 */
-        i32 symbolIdx;
+        i32 _symbolIdx;
 } DgyParser;
 
 ErrCode dgyParserInit(DgyParser *parser);

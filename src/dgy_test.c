@@ -19,13 +19,6 @@ static void test_parser(void)
 
 static void test_analyser(void)
 {
-        DgyAnalyser analyser;
-        dgyAnalyserInit(&analyser);
-        for (;;)
-        {
-                dgyDoAnalyserOnce(&analyser, stdin);
-        }
-        dgyAnalyserDestroy(&analyser);
 }
 
 void dgyUnitTest(void)

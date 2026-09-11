@@ -136,8 +136,6 @@ static void sym_escape_seq(FILE *in, i32 *len, wchar_t *buffer)
                 case L'n':
                         buffer[(*len)++] = L'\n';
                         break;
-                case L'\\':
-                case L'*':
                 default:
                         buffer[(*len)++] = wc;
                         break;
@@ -284,11 +282,11 @@ end:
         {
         case INT_1:
                 wprintf(L"%ls: ", symName);
-                wprintf(ERR_EXPECT_SYMBOL("<数字>"));
+                wprintf(ERR_EXPECT_SYMBOL(L"<数字>"));
                 break;
         case HEX_2:
                 wprintf(L"%ls: ", symName);
-                wprintf(ERR_EXPECT_SYMBOL("<十六进制数字>"));
+                wprintf(ERR_EXPECT_SYMBOL(L"<十六进制数字>"));
                 break;
         case INT_END:
         case HEX_END:
@@ -311,6 +309,7 @@ static SymbolType sym_Str(FILE *in, wint_t wc, wchar_t *buffer)
                 START,
                 STR_1,
                 STR_2,
+                STR_3,
                 STR_END,
         };
         enum
@@ -326,6 +325,10 @@ static SymbolType sym_Str(FILE *in, wint_t wc, wchar_t *buffer)
         {
                 status = STR_1;
         }
+        else if (wc == L'{')
+        {
+                status = STR_3;
+        }
         else
         {
                 goto end;
@@ -340,12 +343,32 @@ static SymbolType sym_Str(FILE *in, wint_t wc, wchar_t *buffer)
                 switch (wc)
                 {
                 case L'*':
-                        status = STR_END;
-                        goto end;
+                        if (status == STR_1)
+                        {
+                                status = STR_END;
+                                goto end;
+                        }
+                        else
+                        {
+                                goto handle_common_char;
+                        }
+                        break;
+                case L'}':
+                        if (status == STR_3)
+                        {
+                                status = STR_END;
+                                goto end;
+                        }
+                        else
+                        {
+                                goto handle_common_char;
+                        }
+                        break;
                 case L'\\':
                         sym_escape_seq(in, &bufIdx, buffer);
                         break;
                 default:
+                handle_common_char:
                         if (bufIdx < MAX_BUF_SIZE)
                         {
                                 buffer[bufIdx++] = wc;
@@ -362,11 +385,11 @@ end:
         {
         case STR_1:
                 wprintf(L"%ls: ", symName);
-                wprintf(ERR_UNCLOSED_SYMBOL("*"));
+                wprintf(ERR_UNCLOSED_SYMBOL(L"*"));
                 break;
         case STR_2:
                 wprintf(L"%ls: ", symName);
-                wprintf(ERR_INVALID_SYMBOL("\\n"));
+                wprintf(ERR_INVALID_SYMBOL(L"\\n"));
                 break;
         case STR_END:
                 if (bufIdx == 1)
@@ -449,11 +472,11 @@ end:
         {
         case CMT_2:
                 wprintf(L"%ls: ", symName);
-                wprintf(ERR_UNCLOSED_SYMBOL("/*"));
+                wprintf(ERR_UNCLOSED_SYMBOL(L"/*"));
                 break;
         case CMT_3:
                 wprintf(L"%ls: ", symName);
-                wprintf(ERR_UNCLOSED_SYMBOL("/"));
+                wprintf(ERR_UNCLOSED_SYMBOL(L"/"));
                 break;
         case CMT_END:
                 matched = S_COMMENT;
@@ -681,7 +704,7 @@ static SymbolType sym_Cell(FILE *in, wint_t wc, wchar_t *buffer)
             {
                 {S_WORD_REG, S_IMMD_REG},
                 {S_WORD_CELL, S_IMMD_CELL},
-            };
+        };
         static const wchar_t *symName = L"<单元/寄存器>";
         SymbolType matched = S_UNDEFINED;
         i32 isReg = 0;  // 寄存器的标志
@@ -733,7 +756,7 @@ end:
         if (status == CELL_1 || status == CELL_2)
         {
                 wprintf(L"%ls: ", symName);
-                wprintf(ERR_EXPECT_SYMBOL("<词语> 或 <立即数>"));
+                wprintf(ERR_EXPECT_SYMBOL(L"<词语> 或 <立即数>"));
         }
         else if (status == END)
         {

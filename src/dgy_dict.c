@@ -38,26 +38,74 @@ ErrCode dgyDictInit(DgyDict *dict, size_t size)
         return CODE_SUCCESS;
 }
 
-ErrCode dgyDictAdd(DgyDict *dict, const wchar_t *name, i32 entry, i32 level)
+ErrCode dgyDictAdd(DgyDict *dict, DictItem *item)
 {
-        if (!name || !dict)
+        if (!dict || !item->name)
         {
                 dgySetErr(ERR_NULLPTR, L"dgyDictAdd");
                 return CODE_FAILURE;
         }
-        size_t nameLen = wcslen(name);
+        size_t nameLen = wcslen(item->name);
         DictItem newItem;
         // 分配空间 - DictItem.name
         newItem.name = (wchar_t *)malloc(nameLen * sizeof(wchar_t));
-        wcscpy(newItem.name, name);
-        newItem.entry = entry;
-        newItem.level = level;
+        wcscpy(newItem.name, item->name);
+        newItem.entry = item->entry;
+        newItem.level = item->level;
+        newItem.length = item->length;
         if (dict->top == dict->size / 2 && (CODE_SUCCESS != resize(2 * dict->size, dict)))
         {
                 return CODE_FAILURE;
         }
         dict->dict[(dict->top)++] = newItem;
         return CODE_SUCCESS;
+}
+
+ErrCode dgyDictForgetLatest(DgyDict *dict)
+{
+        if (!dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyDictForgetLatest");
+                return CODE_FAILURE;
+        }
+        if (dict->top == 0)
+        {
+                dgySetErr(ERR_UNDERFLOW, L"dgyDictForgetLatest");
+                return CODE_FAILURE;
+        }
+        --(dict->top);
+        if (dict->top == dict->size / 4 && (CODE_SUCCESS != resize(dict, dict->size / 2)))
+        {
+                dgyGetErr();
+                return CODE_FAILURE;
+        }
+        return CODE_SUCCESS;
+}
+
+ErrCode dgyDictGetLatest(DgyDict *dict, DictItem *item)
+{
+        if (!dict || !item)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyStackGetItemAt");
+                return CODE_FAILURE;
+        }
+        if (dict->top - 1 < 0)
+        {
+                dgySetErr(ERR_OUT_OF_BOUNDS, L"dgyDictGetLatest");
+                return CODE_FAILURE;
+        }
+        *item = dict->dict[dict->top - 1];
+        return CODE_SUCCESS;
+}
+
+bool dgyDictIsEmpty(DgyDict *dict)
+{
+        if (!dict)
+        {
+                dgySetErr(ERR_NULLPTR, L"dgyStackIsEmpty");
+                return true;
+        }
+        return dict->top == 0;
 }
 
 static i32 searchItemByEntry(const DgyDict *dict, i32 entry)
@@ -172,10 +220,12 @@ ErrCode dgyDictDump(const DgyDict *dict)
                 dgySetErr(ERR_NULLPTR, L"dgyDictDump");
                 return CODE_FAILURE;
         }
+        wprintf(L"-----打印词典-----\n");
         for (i32 i = 0; i < dict->top; ++i)
         {
                 DictItem item = dict->dict[i];
                 wprintf(L"%ls : %d\n", item.name, item.entry);
         }
+        wprintf(L"------------------\n");
         return CODE_SUCCESS;
 }

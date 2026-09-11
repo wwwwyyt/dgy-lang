@@ -14,7 +14,7 @@ ErrCode dgyCoreInit(DgyCore *core, FILE *in, FILE *out)
         /* 初始化词典 */
         dgyDictInit(&(core->wordDict), 16);
         /* 初始化语义分析器 */
-        dgyAnalyserInit(&(core->analyser));
+        dgyAnalyserInit(&(core->analyser), &(core->wordDict), &(core->codeStack));
         /* 初始化输入和输出流 */
         core->in = in;
         core->out = out;

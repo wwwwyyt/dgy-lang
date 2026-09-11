@@ -16,13 +16,16 @@ enum
 /** @brief DGY 语言执行状态 */
 typedef struct
 {
-        /** @brief 数据栈 */
+        /** @brief 数据栈，存放执行时的数据 */
         DgyStack dataStack;
 
-        /** @brief 词典 */
+        /** @brief 代码栈，存放编译好的词语的字节码 */
+        DgyStack codeStack;
+
+        /** @brief 词典，存放词语位于代码栈中的索引等信息 */
         DgyDict wordDict;
 
-        /** @brief 寄存器组 */
+        /** @brief 寄存器组，存放临时变量 */
         cell_t regGroup[CORE_MAX_REG_CNT];
 
         /** @brief 语义分析器，获取字节码流 */
@@ -32,7 +35,7 @@ typedef struct
         FILE *in, *out;
 } DgyCore;
 
-ErrCode dgyCoreInit(DgyCore *core);
+ErrCode dgyCoreInit(DgyCore *core, FILE *in, FILE *out);
 ErrCode dgyCoreDestroy(DgyCore *core);
 
 #endif

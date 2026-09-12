@@ -24,6 +24,7 @@ static ErrCode stackCheck(DgyStack *dataStack,
         if (bp < 0)
         {
                 dgySetErr(ERR_UNDERFLOW, funcName);
+                dgyGetErr();
                 return CODE_FAILURE;
         }
         return CODE_SUCCESS;
@@ -103,6 +104,11 @@ static void sintdiv(DgyStack *dataStack)
         {
                 cell_t *s = dataStack->stack;
                 const int bp = dataStack->sp - argCnt;
+                if (s[bp + 1].data.sint == 0)
+                {
+                        dgySetErr(ERR_UNDERFLOW, funcName);
+                        dgyGetErr();
+                }
                 s[bp].data.sint /= s[bp + 1].data.sint;
         }
         stackReturn(dataStack, funcName, argCnt, retCnt);

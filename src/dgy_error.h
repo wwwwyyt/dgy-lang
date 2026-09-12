@@ -26,6 +26,7 @@ typedef enum
         ERR_UNDERFLOW = 3,
         ERR_OVERFLOW = 4,
         ERR_OUT_OF_BOUNDS = 5,
+        ERR_DIV_BY_ZERO = 6,
         ERR_CNT,
 } ErrCode;
 

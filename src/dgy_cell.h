@@ -20,6 +20,8 @@ typedef enum
         CELL_LEXER_WORD_REG,
         CELL_LEXER_IMMD_CELL,
         CELL_LEXER_IMMD_REG,
+
+        CELL_CODE_BUILTIN_WORD,
 } CellType;
 
 typedef struct
